@@ -1,71 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Download, Sparkles, Loader2, Moon, Mountain, 
-  Box, Stars, Ghost, X, Info, ShieldCheck, Monitor, Smartphone 
+  Box, Stars, Ghost, X, Info, ShieldCheck, Monitor, Smartphone, 
+  ArrowRight, Zap, Heart, Bookmark, Share2, Copy, Check 
 } from 'lucide-react';
 
-// --- 3D Card Component for Immersive Feel ---
-const WallpaperCard = ({ img, orientation, onClick }) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  // Mouse move par rotation values calculate karna
-  const rotateX = useTransform(y, [-100, 100], [15, -15]);
-  const rotateY = useTransform(x, [-100, 100], [-15, 15]);
-
-  function handleMouse(event) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    x.set(event.clientX - centerX);
-    y.set(event.clientY - centerY);
-  }
-
-  function handleMouseLeave() {
-    x.set(0);
-    y.set(0);
-  }
-
-  return (
-    <motion.div 
-      style={{ perspective: 1000 }}
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="relative group"
-    >
-      <motion.div
-        onMouseMove={handleMouse}
-        onMouseLeave={handleMouseLeave}
-        style={{ rotateX, rotateY }}
-        onClick={() => onClick(img)}
-        className={`relative rounded-3xl overflow-hidden bg-zinc-900 border border-white/5 cursor-pointer shadow-2xl transition-shadow hover:shadow-cyan-500/10 ${
-          orientation === 'landscape' ? 'aspect-video' : 'aspect-[9/16]'
-        }`}
-      >
-        <motion.img 
-          src={img.url} 
-          className="w-full h-full object-cover pointer-events-none"
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.6 }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent p-6 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <p className="text-cyan-400 text-[9px] font-black uppercase tracking-[0.3em] mb-1">Ultra 4K Render</p>
-          <p className="text-white text-xs font-medium italic">by {img.photographer}</p>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
-// --- Main App ---
 const CATEGORIES = [
-  { name: "Curated", query: "4k wallpaper aesthetic", icon: <Sparkles size={16} /> },
-  { name: "Nature", query: "4k nature landscape", icon: <Mountain size={16} /> },
-  { name: "Space", query: "galaxy stars nebula", icon: <Stars size={16} /> },
-  { name: "3D", query: "3d abstract render", icon: <Box size={16} /> },
-  { name: "Anime", query: "anime scenery art", icon: <Ghost size={16} /> },
-  { name: "Dark", query: "black amoled dark", icon: <Moon size={16} /> }
+  { name: "Curated", query: "4k wallpaper aesthetic", icon: <Sparkles size={18} /> },
+  { name: "Landscape", query: "8k nature cinematic", icon: <Mountain size={18} /> },
+  { name: "Abstract", query: "3d minimal render white", icon: <Box size={18} /> },
+  { name: "Amoled", query: "pure black amoled wallpaper", icon: <Moon size={18} /> },
+  { name: "Saved", query: "SAVED_ITEMS", icon: <Bookmark size={18} /> }
 ];
 
 const App = () => {
@@ -77,8 +23,56 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [view, setView] = useState('gallery');
+  const [copiedId, setCopiedId] = useState(null);
+  const [savedWallpapers, setSavedWallpapers] = useState(() => {
+    const localData = localStorage.getItem('wallux_saved');
+    return localData ? JSON.parse(localData) : [];
+  });
+
+  // Sync LocalStorage
+  useEffect(() => {
+    localStorage.setItem('wallux_saved', JSON.stringify(savedWallpapers));
+  }, [savedWallpapers]);
+
+  // --- Functions ---
+  const toggleSave = (e, img) => {
+    e.stopPropagation();
+    const isSaved = savedWallpapers.find(item => item.id === img.id);
+    if (isSaved) {
+      setSavedWallpapers(prev => prev.filter(item => item.id !== img.id));
+    } else {
+      setSavedWallpapers(prev => [img, ...prev]);
+    }
+  };
+
+  const copyToClipboard = (e, url, id) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const downloadImage = async (url, id) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `Wallux-${id}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      window.open(url, '_blank');
+    }
+  };
 
   const fetchWallpapers = useCallback(async (isNewSearch = false) => {
+    if (activeCategory === "Saved") {
+      setWallpapers(savedWallpapers);
+      return;
+    }
     if (loading) return;
     setLoading(true);
     try {
@@ -88,120 +82,142 @@ const App = () => {
       const data = await response.json();
       if (data.photos) {
         const formatted = data.photos.map(p => ({
-          id: p.id, url: orientation === 'portrait' ? p.src.large2x : p.src.large,
-          hd: p.src.original, photographer: p.photographer
+          id: p.id, url: p.src.large2x, hd: p.src.original, photographer: p.photographer
         }));
         setWallpapers(prev => isNewSearch ? formatted : [...prev, ...formatted]);
         setPage(targetPage + 1);
       }
     } catch (e) { console.error(e); } finally { setLoading(false); }
-  }, [activeCategory, searchQuery, page, loading, orientation]);
+  }, [activeCategory, searchQuery, page, loading, orientation, savedWallpapers]);
 
   useEffect(() => { fetchWallpapers(true); }, [activeCategory, orientation]);
 
   return (
-    <div className="min-h-screen bg-[#020203] text-zinc-400 font-sans selection:bg-cyan-500">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#020203] text-zinc-300 font-sans selection:bg-cyan-500/30 overflow-x-hidden">
+      <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row relative z-10">
         
         {/* Sidebar */}
-        <aside className="w-full md:w-72 p-8 border-r border-white/5 md:h-screen sticky top-0 bg-[#020203]/80 backdrop-blur-xl z-40">
-          <motion.h1 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="text-3xl font-black text-white italic mb-10 tracking-tighter bg-gradient-to-br from-white to-zinc-500 bg-clip-text text-transparent"
-          >
-            WALLUX.PRO
-          </motion.h1>
-          
-          <div className="flex bg-zinc-900/50 p-1.5 rounded-2xl mb-8 border border-white/5">
-            <button onClick={() => setOrientation('landscape')} className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all ${orientation === 'landscape' ? 'bg-white text-black shadow-xl shadow-white/10' : 'text-zinc-500'}`}>DESKTOP</button>
-            <button onClick={() => setOrientation('portrait')} className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all ${orientation === 'portrait' ? 'bg-white text-black shadow-xl shadow-white/10' : 'text-zinc-500'}`}>MOBILE</button>
+        <aside className="w-full lg:w-85 p-8 lg:h-screen lg:sticky lg:top-0 border-r border-white/5 bg-black/40 backdrop-blur-3xl">
+          <div className="flex items-center gap-4 mb-12">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
+               <Zap className="text-black fill-black" size={24} />
+            </div>
+            <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase">Wallux</h1>
           </div>
+          
+          <div className="space-y-8">
+            <div className="relative group">
+              <div className="relative flex items-center bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-1">
+                <Search className="text-zinc-600 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                <input 
+                  className="w-full bg-transparent border-none py-4 px-3 text-sm text-white outline-none placeholder:text-zinc-700" 
+                  placeholder="Search assets..." 
+                  onKeyDown={(e) => e.key === 'Enter' && fetchWallpapers(true)}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
 
-          <nav className="space-y-2 mb-10">
-            {CATEGORIES.map((c) => (
-              <button key={c.name} onClick={() => { setActiveCategory(c.name); setView('gallery'); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[10px] font-bold tracking-[0.2em] transition-all ${activeCategory === c.name ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'hover:bg-white/5 opacity-60 hover:opacity-100'}`}>
-                {c.icon} {c.name}
-              </button>
-            ))}
-          </nav>
+            <nav className="space-y-2">
+              {CATEGORIES.map((c) => (
+                <button key={c.name} onClick={() => { setActiveCategory(c.name); setView('gallery'); }} 
+                  className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all ${activeCategory === c.name && view === 'gallery' ? 'bg-white text-black font-bold' : 'hover:bg-white/5 opacity-60'}`}>
+                  <span className="flex items-center gap-4 text-[10px] tracking-widest uppercase">{c.icon} {c.name}</span>
+                  {c.name === "Saved" && savedWallpapers.length > 0 && <span className="text-[10px] bg-cyan-500 text-black px-2 py-0.5 rounded-full">{savedWallpapers.length}</span>}
+                </button>
+              ))}
+            </nav>
 
-          <div className="pt-8 border-t border-white/5 space-y-4">
-            <button onClick={() => setView('about')} className="flex items-center gap-3 text-[10px] font-black tracking-widest hover:text-white"><Info size={16}/> EDITORIAL BUREAU</button>
-            <button onClick={() => setView('privacy')} className="flex items-center gap-3 text-[10px] font-black tracking-widest hover:text-white"><ShieldCheck size={16}/> LEGAL PRIVACY</button>
+            <div className="pt-8 border-t border-white/5 grid grid-cols-2 gap-4">
+              <button onClick={() => setView('about')} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest"><Info size={18}/> About</button>
+              <button onClick={() => setView('privacy')} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest"><ShieldCheck size={18}/> Legal</button>
+            </div>
           </div>
         </aside>
 
-        {/* Content Area */}
-        <main className="flex-1 p-8 lg:p-12">
+        {/* Main Content */}
+        <main className="flex-1 p-8 lg:p-16">
           {view === 'gallery' ? (
             <>
-              <motion.header initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="mb-16">
-                <h2 className="text-5xl lg:text-7xl font-black text-white mb-6 tracking-tighter leading-none italic">CURATED <br/><span className="text-cyan-500">EXCELLENCE.</span></h2>
-                <p className="text-lg text-zinc-500 max-w-xl leading-relaxed">Experience high-fidelity 4K visual assets, mathematically processed for high-end displays.</p>
-              </motion.header>
+              <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-20">
+                <div>
+                  <h2 className="text-7xl lg:text-9xl font-black text-white tracking-tighter leading-[0.85] italic mb-6">
+                    {activeCategory === "Saved" ? "COLLECTION" : "PREMIUM"} <br/><span className="text-zinc-800 outline-text">VISUALS.</span>
+                  </h2>
+                </div>
+                
+                <div className="flex bg-zinc-900/50 p-1.5 rounded-[2rem] border border-white/5">
+                  <button onClick={() => setOrientation('landscape')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all ${orientation === 'landscape' ? 'bg-white text-black shadow-xl' : 'text-zinc-500'}`}>DESKTOP</button>
+                  <button onClick={() => setOrientation('portrait')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all ${orientation === 'portrait' ? 'bg-white text-black shadow-xl' : 'text-zinc-500'}`}>MOBILE</button>
+                </div>
+              </header>
 
-              <div className={`grid gap-8 ${orientation === 'landscape' ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-2 lg:grid-cols-3'}`}>
+              <div className={`grid gap-12 ${orientation === 'landscape' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2 lg:grid-cols-3'}`}>
                 {wallpapers.map((img, i) => (
-                  <WallpaperCard key={`${img.id}-${i}`} img={img} orientation={orientation} onClick={setSelectedImage} />
+                  <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={`${img.id}-${i}`} className="group relative">
+                    <div 
+                      className={`relative rounded-[2.5rem] overflow-hidden bg-zinc-900 border border-white/5 cursor-pointer ${orientation === 'landscape' ? 'aspect-[16/10]' : 'aspect-[9/16]'}`}
+                      onClick={() => setSelectedImage(img)}
+                    >
+                      <img src={img.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
+                      
+                      {/* Floating Actions */}
+                      <div className="absolute top-6 right-6 flex flex-col gap-3 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500">
+                        <button onClick={(e) => toggleSave(e, img)} className={`p-4 rounded-full backdrop-blur-3xl border border-white/10 ${savedWallpapers.find(s => s.id === img.id) ? 'bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20' : 'bg-black/40 text-white hover:bg-white hover:text-black'}`}>
+                          <Heart size={18} fill={savedWallpapers.find(s => s.id === img.id) ? "currentColor" : "none"} />
+                        </button>
+                        <button onClick={(e) => copyToClipboard(e, img.hd, img.id)} className="p-4 rounded-full bg-black/40 backdrop-blur-3xl text-white border border-white/10 hover:bg-white hover:text-black transition-all relative">
+                          {copiedId === img.id ? <Check size={18} className="text-green-400" /> : <Share2 size={18} />}
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); downloadImage(img.hd, img.id); }} className="p-4 rounded-full bg-black/40 backdrop-blur-3xl text-white border border-white/10 hover:bg-white hover:text-black transition-all">
+                          <Download size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
 
-              <div className="mt-20 flex justify-center pb-20">
-                <button onClick={() => fetchWallpapers(false)} className="group relative px-16 py-5 bg-white text-black rounded-full font-black text-[10px] uppercase tracking-widest overflow-hidden">
-                  <span className="relative z-10">{loading ? "SYNCING..." : "LOAD NEXT BATCH"}</span>
-                  <motion.div className="absolute inset-0 bg-cyan-400 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                </button>
-              </div>
+              {activeCategory !== "Saved" && (
+                <div className="mt-32 flex justify-center pb-20">
+                  <button onClick={() => fetchWallpapers(false)} className="px-20 py-6 border border-white/10 rounded-full text-[10px] font-black tracking-[0.5em] hover:bg-white hover:text-black transition-all uppercase">
+                    {loading ? <Loader2 className="animate-spin" /> : "Discover More"}
+                  </button>
+                </div>
+              )}
             </>
           ) : (
-             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-3xl py-10">
-                <h2 className="text-4xl font-black text-white mb-8 italic">DOCUMENTATION</h2>
-                <div className="space-y-8 text-zinc-400 leading-relaxed text-sm">
-                  {view === 'about' ? (
-                    <>
-                      <p>Wallux Pro is a premier destination for digital artists and display enthusiasts. Our platform leverages the high-performance Pexels API to deliver source-original 4K imagery.</p>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-6 bg-zinc-900 rounded-3xl border border-white/5 italic">"The highest resolution for the sharpest minds."</div>
-                        <div className="p-6 bg-zinc-900 rounded-3xl border border-white/5 italic">"Optimized for OLED and HDR displays."</div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <p>We value transparency. Our Privacy Policy ensures that your data remains yours. We use standard browser cookies to optimize your wallpaper browsing experience and integrate Google AdSense for sustainable operations.</p>
-                      <p>All assets fall under the Pexels Creative Commons license, making them safe for both personal and professional creative work.</p>
-                    </>
-                  )}
+            /* Legal/About View */
+             <div className="max-w-3xl py-12">
+                <h2 className="text-4xl font-black text-white mb-10 italic uppercase border-b border-white/10 pb-6">{view}</h2>
+                <div className="text-zinc-500 text-sm leading-relaxed space-y-8">
+                  <p>Wallux Pro delivers uncompromised visual assets. All images are subject to the Pexels Open License.</p>
+                  <p>We respect your privacy. No personal data is harvested during your session. Google AdSense integration ensures our servers stay operational.</p>
                 </div>
-                <button onClick={() => setView('gallery')} className="mt-12 text-cyan-400 font-black text-[10px] tracking-widest hover:underline uppercase">← Back to Visuals</button>
-             </motion.div>
+                <button onClick={() => setView('gallery')} className="mt-16 text-white border-b-2 border-white pb-2 font-black text-[10px] tracking-widest uppercase">Back to Visuals</button>
+             </div>
           )}
         </main>
       </div>
 
-      {/* 3D Modal Experience */}
+      {/* Modal View */}
       <AnimatePresence>
         {selectedImage && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/98 backdrop-blur-3xl"
-            onClick={() => setSelectedImage(null)}
-          >
-            <motion.div 
-              initial={{ scale: 0.8, rotateY: 20 }} animate={{ scale: 1, rotateY: 0 }}
-              className="relative max-w-6xl w-full bg-[#0a0a0c] rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/10"
-              onClick={e => e.stopPropagation()}
-            >
-              <img src={selectedImage.hd} className={`w-full object-contain ${orientation === 'portrait' ? 'max-h-[65vh]' : 'max-h-[75vh]'}`} />
-              <div className="p-10 flex flex-col md:flex-row justify-between items-center gap-8 bg-gradient-to-r from-zinc-950 to-transparent">
-                <div className="text-center md:text-left">
-                  <h4 className="text-white font-black uppercase tracking-[0.2em] text-2xl italic">ASSET READY.</h4>
-                  <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mt-2">Source Origin: Master 4K Resolution</p>
+          <div className="fixed inset-0 z-50 bg-black/98 backdrop-blur-3xl flex items-center justify-center p-8" onClick={() => setSelectedImage(null)}>
+             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="relative max-w-6xl w-full text-center" onClick={e => e.stopPropagation()}>
+                <img src={selectedImage.hd} className="w-full max-h-[70vh] object-contain rounded-[2rem] mb-10 shadow-2xl" />
+                <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                  <div className="text-left">
+                    <h4 className="text-white text-4xl font-black italic tracking-tighter uppercase">Source Origin</h4>
+                    <p className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase mt-2">Asset ID: {selectedImage.id} • Photographer: {selectedImage.photographer}</p>
+                  </div>
+                  <div className="flex gap-4 w-full md:w-auto">
+                    <button onClick={() => downloadImage(selectedImage.hd, selectedImage.id)} className="flex-1 md:px-12 py-5 bg-white text-black font-black text-[10px] tracking-widest uppercase rounded-2xl hover:bg-cyan-500 transition-all">Download Master</button>
+                  </div>
                 </div>
-                <a href={selectedImage.hd} target="_blank" className="w-full md:w-auto text-center bg-cyan-500 text-black px-12 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-white hover:scale-105 transition-all shadow-xl shadow-cyan-500/20">Download File</a>
-              </div>
-              <button onClick={() => setSelectedImage(null)} className="absolute top-8 right-8 text-white/20 hover:text-white transition-colors"><X size={32}/></button>
-            </motion.div>
-          </motion.div>
+                <button onClick={() => setSelectedImage(null)} className="absolute -top-12 right-0 text-white opacity-20 hover:opacity-100"><X size={32}/></button>
+             </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
@@ -209,4 +225,4 @@ const App = () => {
 };
 
 export default App;
-                
+                      
