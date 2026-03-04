@@ -6,8 +6,10 @@
     
     <meta name="google-site-verification" content="B4WwjSTxC4VR4yq55ef6HA6GhMOgMdsh84pt69lLCVA" />
 
-    <title>Wallux Pro | Premium 4K Visual Assets</title>
-    <meta name="description" content="Download high-fidelity 4K wallpapers for mobile and desktop.">
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <title>Asthexwall | Premium 4K Visual Assets</title>
+    <meta name="description" content="Download high-fidelity 4K aesthetic wallpapers from Asthexwall for mobile and desktop.">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +24,7 @@
         html { scroll-behavior: smooth; }
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #020203; 
+            background-color: #050508; /* Darker premium background */
             margin: 0; 
             color: #d4d4d8; 
             overflow-x: hidden;
@@ -30,9 +32,9 @@
         }
         .outline-text { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1); color: transparent; }
         ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        /* Scrollbar match with new Violet theme */
+        ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 10px; }
 
-        /* Initial hidden state for animations to prevent jumpiness */
         .reveal-init { opacity: 0; transform: translateY(20px); }
     </style>
 </head>
@@ -45,12 +47,10 @@
         window.addEventListener('load', () => {
             if (window.gsap) {
                 gsap.registerPlugin(ScrollTrigger);
-                gsap.ticker.fps(60); // Locked 60FPS for Mobile smoothness
+                gsap.ticker.fps(60);
 
-                // 1. Give React a moment to render the DOM
                 setTimeout(() => {
                     
-                    // --- Hero Section Animation ---
                     const heroTl = gsap.timeline();
                     heroTl.from("h1, h2", {
                         y: 60,
@@ -60,8 +60,6 @@
                         ease: "power4.out"
                     });
 
-                    // --- Wallpaper Cards Scroll Animation ---
-                    // Target images and buttons that appear inside the root
                     gsap.utils.toArray('img').forEach((img) => {
                         gsap.from(img, {
                             scrollTrigger: {
@@ -76,7 +74,6 @@
                         });
                     });
 
-                    // Sidebar animation for Desktop
                     gsap.from("aside", {
                         x: -50,
                         opacity: 0,
@@ -85,11 +82,10 @@
                         ease: "power3.out"
                     });
 
-                }, 1500); // 1.5s delay to ensure React content is ready
+                }, 1500);
             }
         });
 
-        // Mobile Resize Fix for ScrollTrigger
         ScrollTrigger.config({ 
             ignoreMobileResize: true 
         });
