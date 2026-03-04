@@ -7,6 +7,7 @@
     <meta name="google-site-verification" content="B4WwjSTxC4VR4yq55ef6HA6GhMOgMdsh84pt69lLCVA" />
 
     <title>Wallux Pro | Premium 4K Visual Assets</title>
+    <meta name="description" content="Download high-fidelity 4K wallpapers for mobile and desktop.">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,9 +31,9 @@
         .outline-text { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1); color: transparent; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-        
-        /* GSAP Flicker Prevention */
-        .gsap-reveal { opacity: 0; }
+
+        /* Initial hidden state for animations to prevent jumpiness */
+        .reveal-init { opacity: 0; transform: translateY(20px); }
     </style>
 </head>
 <body>
@@ -41,12 +42,57 @@
     <script type="module" src="/src/main.jsx"></script>
 
     <script>
-        // GSAP Global Config for Mobile
-        if (window.gsap) {
-            gsap.registerPlugin(ScrollTrigger);
-            gsap.ticker.fps(60); 
-            ScrollTrigger.config({ ignoreMobileResize: true });
-        }
+        window.addEventListener('load', () => {
+            if (window.gsap) {
+                gsap.registerPlugin(ScrollTrigger);
+                gsap.ticker.fps(60); // Locked 60FPS for Mobile smoothness
+
+                // 1. Give React a moment to render the DOM
+                setTimeout(() => {
+                    
+                    // --- Hero Section Animation ---
+                    const heroTl = gsap.timeline();
+                    heroTl.from("h1, h2", {
+                        y: 60,
+                        opacity: 0,
+                        duration: 1.2,
+                        stagger: 0.2,
+                        ease: "power4.out"
+                    });
+
+                    // --- Wallpaper Cards Scroll Animation ---
+                    // Target images and buttons that appear inside the root
+                    gsap.utils.toArray('img').forEach((img) => {
+                        gsap.from(img, {
+                            scrollTrigger: {
+                                trigger: img,
+                                start: "top 90%",
+                                toggleActions: "play none none none"
+                            },
+                            scale: 0.95,
+                            opacity: 0,
+                            duration: 1,
+                            ease: "expo.out"
+                        });
+                    });
+
+                    // Sidebar animation for Desktop
+                    gsap.from("aside", {
+                        x: -50,
+                        opacity: 0,
+                        duration: 1,
+                        delay: 0.5,
+                        ease: "power3.out"
+                    });
+
+                }, 1500); // 1.5s delay to ensure React content is ready
+            }
+        });
+
+        // Mobile Resize Fix for ScrollTrigger
+        ScrollTrigger.config({ 
+            ignoreMobileResize: true 
+        });
     </script>
 </body>
 </html>
