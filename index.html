@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <meta name="google-site-verification" content="B4WwjSTxC4VR4yq55ef6HA6GhMOgMdsh84pt69lLCVA" />
 
-    <title>Wallux Pro | Premium 4K Visual Assets & Wallpapers</title>
-    <meta name="description" content="Download high-fidelity 4K wallpapers for mobile and desktop. Curated collection of anime, nature, and abstract visual assets.">
+    <title>Wallux Pro | Premium 4K Visual Assets</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,16 +14,39 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
     <style>
         html { scroll-behavior: smooth; }
-        body { font-family: 'Inter', sans-serif; background-color: #020203; margin: 0; color: #d4d4d8; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #020203; 
+            margin: 0; 
+            color: #d4d4d8; 
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
         .outline-text { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1); color: transparent; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        
+        /* GSAP Flicker Prevention */
+        .gsap-reveal { opacity: 0; }
     </style>
 </head>
 <body>
     <div id="root"></div>
+
     <script type="module" src="/src/main.jsx"></script>
+
+    <script>
+        // GSAP Global Config for Mobile
+        if (window.gsap) {
+            gsap.registerPlugin(ScrollTrigger);
+            gsap.ticker.fps(60); 
+            ScrollTrigger.config({ ignoreMobileResize: true });
+        }
+    </script>
 </body>
 </html>
