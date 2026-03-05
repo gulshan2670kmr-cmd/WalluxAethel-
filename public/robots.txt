@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 # Sitemap ka link Google ko dene ke liye
-Sitemap: https://your-domain.vercel.app/sitemap.xml
+Sitemap: https://wallux-aethel.vercel.app/sitemap.xml
