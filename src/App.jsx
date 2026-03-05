@@ -3,22 +3,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Download, Sparkles, Loader2, Moon, Mountain, 
   Box, Stars, Ghost, X, Info, ShieldCheck, Monitor, Smartphone, 
-  ArrowRight, Zap, Heart, Bookmark, Share2, Copy, Check, Mail, Scale, FileText
+  ArrowRight, Zap, Heart, Bookmark, Share2, Copy, Check, Mail, FileText
 } from 'lucide-react';
 
-// --- NEW SECTIONS FOR ADSENSE COMPLIANCE ---
+// --- UPDATED LEGAL CONTENT FOR ASTHEXWALL ---
 const LEGAL_CONTENT = {
   privacy: {
     title: "Privacy Policy",
     content: (
       <div className="space-y-6">
-        <p>Last Updated: October 2023. At Wallux, we prioritize your privacy. This policy outlines how we handle data.</p>
+        <p>Last Updated: 2026. At Asthexwall, we prioritize your privacy. This policy outlines how we handle data.</p>
         <h3 className="text-white font-bold">1. Data Collection</h3>
-        <p>We do not require user accounts. We use local storage to save your "Liked" wallpapers locally on your device. We do not store this data on our servers.</p>
+        <p>Asthexwall is designed to be privacy-first. We use local storage to save your "Liked" wallpapers locally on your device. We do not store this data on our servers or track individual user identities.</p>
         <h3 className="text-white font-bold">2. Cookies & Ads</h3>
-        <p>We use Google AdSense to serve ads. Google may use cookies (DART cookies) to serve ads based on your visit to this and other sites on the internet.</p>
+        <p>We use Google AdSense to serve ads. Google may use cookies (DART cookies) to serve ads based on your visit to Asthexwall and other sites on the internet.</p>
         <h3 className="text-white font-bold">3. Third Party Links</h3>
-        <p>Our assets are sourced via Pexels API. When downloading, you are subject to Pexels' terms of service.</p>
+        <p>Our assets are sourced via Pexels API. When downloading, you are subject to the Pexels license and terms of service.</p>
       </div>
     )
   },
@@ -26,26 +26,26 @@ const LEGAL_CONTENT = {
     title: "Terms of Service",
     content: (
       <div className="space-y-6">
-        <p>By using Wallux, you agree to the following terms:</p>
+        <p>By accessing Asthexwall, you agree to the following terms:</p>
         <ul className="list-disc ml-5 space-y-2">
-          <li>The wallpapers provided are for personal use as device backgrounds.</li>
-          <li>Commercial redistribution of these assets without attribution to the original photographer is prohibited.</li>
-          <li>You may not use our "Search" functionality for automated data scraping.</li>
+          <li>Assets provided are for personal use as digital backgrounds.</li>
+          <li>Commercial redistribution or selling of these assets as your own is strictly prohibited.</li>
+          <li>Asthexwall provides a curated interface; original image rights remain with the respective photographers via Pexels.</li>
         </ul>
       </div>
     )
   },
   contact: {
-    title: "Contact Us",
+    title: "Contact Asthexwall",
     content: (
       <div className="space-y-6">
-        <p>Have questions regarding copyright or technical issues? Reach out to our team.</p>
+        <p>For copyright inquiries, technical support, or feedback, please use the form below.</p>
         <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
           <label className="block text-[10px] uppercase tracking-widest mb-2">Email Address</label>
-          <input type="email" placeholder="your@email.com" className="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-4 outline-none focus:border-cyan-500 transition-colors" />
+          <input type="email" placeholder="contact@asthexwall.com" className="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-4 outline-none focus:border-cyan-500 transition-colors" />
           <label className="block text-[10px] uppercase tracking-widest mb-2">Message</label>
           <textarea rows="4" className="w-full bg-black/50 border border-white/10 p-4 rounded-xl outline-none focus:border-cyan-500 transition-colors"></textarea>
-          <button className="w-full py-4 bg-white text-black font-black text-[10px] tracking-widest uppercase rounded-xl mt-4 hover:bg-cyan-500 transition-colors">Send Inquiry</button>
+          <button className="w-full py-4 bg-white text-black font-black text-[10px] tracking-widest uppercase rounded-xl mt-4 hover:bg-cyan-500 transition-colors">Submit Request</button>
         </div>
       </div>
     )
@@ -68,15 +68,18 @@ const App = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [view, setView] = useState('gallery'); // gallery, privacy, terms, contact
+  const [view, setView] = useState('gallery');
   const [copiedId, setCopiedId] = useState(null);
   const [savedWallpapers, setSavedWallpapers] = useState(() => {
-    const localData = typeof window !== 'undefined' ? localStorage.getItem('wallux_saved') : null;
-    return localData ? JSON.parse(localData) : [];
+    if (typeof window !== 'undefined') {
+      const localData = localStorage.getItem('asthexwall_saved');
+      return localData ? JSON.parse(localData) : [];
+    }
+    return [];
   });
 
   useEffect(() => {
-    localStorage.setItem('wallux_saved', JSON.stringify(savedWallpapers));
+    localStorage.setItem('asthexwall_saved', JSON.stringify(savedWallpapers));
   }, [savedWallpapers]);
 
   const toggleSave = (e, img) => {
@@ -103,7 +106,7 @@ const App = () => {
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = `Wallux-${id}.jpg`;
+      link.download = `Asthexwall-${id}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -122,7 +125,6 @@ const App = () => {
     try {
       const query = searchQuery || CATEGORIES.find(c => c.name === activeCategory).query;
       const targetPage = isNewSearch ? 1 : page;
-      // Note: Ensure your /api/pexels route is configured correctly
       const response = await fetch(`/api/pexels?query=${encodeURIComponent(query)}&page=${targetPage}&orientation=${orientation}`);
       const data = await response.json();
       if (data.photos) {
@@ -144,10 +146,10 @@ const App = () => {
         {/* Sidebar */}
         <aside className="w-full lg:w-85 p-8 lg:h-screen lg:sticky lg:top-0 border-r border-white/5 bg-black/40 backdrop-blur-3xl">
           <div className="flex items-center gap-4 mb-12 cursor-pointer" onClick={() => setView('gallery')}>
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.1)]">
                <Zap className="text-black fill-black" size={24} />
             </div>
-            <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase">Wallux</h1>
+            <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase">Asthexwall</h1>
           </div>
           
           <div className="space-y-8">
@@ -156,7 +158,7 @@ const App = () => {
                 <Search className="text-zinc-600 group-focus-within:text-cyan-400 transition-colors" size={18} />
                 <input 
                   className="w-full bg-transparent border-none py-4 px-3 text-sm text-white outline-none placeholder:text-zinc-700" 
-                  placeholder="Search assets..." 
+                  placeholder="Explore aesthetic assets..." 
                   onKeyDown={(e) => e.key === 'Enter' && fetchWallpapers(true)}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -173,12 +175,11 @@ const App = () => {
               ))}
             </nav>
 
-            {/* Compliance Navigation */}
             <div className="pt-8 border-t border-white/5 grid grid-cols-2 gap-4">
               <button onClick={() => setView('privacy')} className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest ${view === 'privacy' ? 'text-cyan-400 border-cyan-500/30' : ''}`}><ShieldCheck size={18}/> Privacy</button>
               <button onClick={() => setView('terms')} className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest ${view === 'terms' ? 'text-cyan-400 border-cyan-500/30' : ''}`}><FileText size={18}/> Terms</button>
               <button onClick={() => setView('contact')} className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest ${view === 'contact' ? 'text-cyan-400 border-cyan-500/30' : ''}`}><Mail size={18}/> Contact</button>
-              <button onClick={() => setView('about')} className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest ${view === 'about' ? 'text-cyan-400 border-cyan-500/30' : ''}`}><Info size={18}/> Mission</button>
+              <button onClick={() => setView('about')} className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest ${view === 'about' ? 'text-cyan-400 border-cyan-500/30' : ''}`}><Info size={18}/> About</button>
             </div>
           </div>
         </aside>
@@ -192,7 +193,7 @@ const App = () => {
                   <h2 className="text-7xl lg:text-9xl font-black text-white tracking-tighter leading-[0.85] italic mb-6">
                     {activeCategory === "Saved" ? "COLLECTION" : "PREMIUM"} <br/><span className="text-zinc-800 outline-text">VISUALS.</span>
                   </h2>
-                  <p className="text-zinc-500 text-xs tracking-widest uppercase">High-fidelity assets sourced from global creators.</p>
+                  <p className="text-zinc-500 text-xs tracking-widest uppercase">Asthexwall: Ultra-high fidelity assets for modern creators.</p>
                 </div>
                 
                 <div className="flex bg-zinc-900/50 p-1.5 rounded-[2rem] border border-white/5">
@@ -210,7 +211,6 @@ const App = () => {
                     >
                       <img src={img.url} alt={`Wallpaper by ${img.photographer}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
                       
-                      {/* Floating Actions */}
                       <div className="absolute top-6 right-6 flex flex-col gap-3 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500">
                         <button onClick={(e) => toggleSave(e, img)} className={`p-4 rounded-full backdrop-blur-3xl border border-white/10 ${savedWallpapers.find(s => s.id === img.id) ? 'bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20' : 'bg-black/40 text-white hover:bg-white hover:text-black'}`}>
                           <Heart size={18} fill={savedWallpapers.find(s => s.id === img.id) ? "currentColor" : "none"} />
@@ -236,37 +236,35 @@ const App = () => {
               )}
             </>
           ) : (
-            /* Compliance Views */
              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-3xl py-12">
                 <h2 className="text-4xl font-black text-white mb-10 italic uppercase border-b border-white/10 pb-6">
-                  {view === 'about' ? 'Our Mission' : LEGAL_CONTENT[view]?.title || view}
+                  {view === 'about' ? 'The Asthexwall Mission' : LEGAL_CONTENT[view]?.title || view}
                 </h2>
                 
                 <div className="text-zinc-500 text-sm leading-relaxed">
                   {view === 'about' ? (
                     <div className="space-y-6">
-                      <p>Wallux is a premier destination for digital aesthetic curation. We bridge the gap between world-class photography and your personal workspace.</p>
-                      <p>Our platform is built for speed, privacy, and visual excellence. Every asset is hand-picked for its composition, lighting, and resolution.</p>
+                      <p>Asthexwall is a premier digital curation platform designed for the modern desktop and mobile aesthetic. We specialize in sourcing minimalist, AMOLED, and cinematic visuals that redefine your screen experience.</p>
+                      <p>Our goal is to provide a seamless, lightning-fast interface where art meets technology. Every wallpaper in our gallery is selected for maximum visual impact and high-resolution clarity.</p>
                     </div>
                   ) : LEGAL_CONTENT[view]?.content}
                 </div>
                 
-                <button onClick={() => setView('gallery')} className="mt-16 text-white border-b-2 border-white pb-2 font-black text-[10px] tracking-widest uppercase">Back to Visuals</button>
+                <button onClick={() => setView('gallery')} className="mt-16 text-white border-b-2 border-white pb-2 font-black text-[10px] tracking-widest uppercase">Back to Gallery</button>
              </motion.div>
           )}
         </main>
       </div>
 
-      {/* Modal View */}
       <AnimatePresence>
         {selectedImage && (
           <div className="fixed inset-0 z-50 bg-black/98 backdrop-blur-3xl flex items-center justify-center p-8" onClick={() => setSelectedImage(null)}>
              <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }} className="relative max-w-6xl w-full text-center" onClick={e => e.stopPropagation()}>
-                <img src={selectedImage.hd} alt="Preview" className="w-full max-h-[70vh] object-contain rounded-[2rem] mb-10 shadow-2xl" />
+                <img src={selectedImage.hd} alt="High Res Preview" className="w-full max-h-[70vh] object-contain rounded-[2rem] mb-10 shadow-2xl" />
                 <div className="flex flex-col md:flex-row justify-between items-center gap-8">
                   <div className="text-left">
                     <h4 className="text-white text-4xl font-black italic tracking-tighter uppercase">Source Origin</h4>
-                    <p className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase mt-2">Asset ID: {selectedImage.id} • Photographer: {selectedImage.photographer}</p>
+                    <p className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase mt-2">Asthexwall ID: {selectedImage.id} • Creator: {selectedImage.photographer}</p>
                   </div>
                   <div className="flex gap-4 w-full md:w-auto">
                     <button onClick={() => downloadImage(selectedImage.hd, selectedImage.id)} className="flex-1 md:px-12 py-5 bg-white text-black font-black text-[10px] tracking-widest uppercase rounded-2xl hover:bg-cyan-500 transition-all">Download Master</button>
@@ -282,4 +280,4 @@ const App = () => {
 };
 
 export default App;
-    
+                      
