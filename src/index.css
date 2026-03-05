@@ -2,7 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-.text-glow { text-shadow: 0 0 15px rgba(0, 243, 255, 0.6); }
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.break-inside-avoid { break-inside: avoid; }
-body { overflow-x: hidden; background: #030305; }
+@layer base {
+  body {
+    @apply bg-[#020202] text-white;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom Scrollbar Hide */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Text Glow Effect for Logo */
+.text-glow {
+  text-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+}
+
+/* Smooth Animation Transitions */
+.wall-card {
+  transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Responsive Grid Adjustments */
+@media (max-width: 768px) {
+  .wall-card {
+    @apply col-span-1 row-span-1 !important;
+  }
+}
