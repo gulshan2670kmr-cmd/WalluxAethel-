@@ -1,44 +1,41 @@
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import * as THREE from 'three';
-import { Aperture, Download, Search, Loader2, ArrowUpRight, Monitor, Smartphone, Zap } from 'lucide-react';
+import { Aperture, Download, Loader2, Monitor, Smartphone, Zap, Search, Shield, Info, FileText } from 'lucide-react';
 
 export default function App() {
   const [wallpapers, setWallpapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('Abstract');
-  const [searchTerm, setSearchTerm] = useState('');
   const [deviceType, setDeviceType] = useState(window.innerWidth < 768 ? 'portrait' : 'landscape');
   const [view, setView] = useState('home');
+  const [searchTerm, setSearchTerm] = useState(''); // Search state add kiya gaya
   const canvasRef = useRef(null);
 
+  // 3D Background Effect (Jo aapne pehle manga tha)
   useEffect(() => {
-    // 1. Immersive 3D Starfield (Warp Effect)
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, alpha: true, antialias: true });
+    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    
     const geometry = new THREE.BufferGeometry();
     const vertices = [];
-    for (let i = 0; i < 6000; i++) vertices.push(THREE.MathUtils.randFloatSpread(2000));
+    for (let i = 0; i < 5000; i++) vertices.push(THREE.MathUtils.randFloatSpread(2000));
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    const stars = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0x00f3ff, size: 0.9, transparent: true, opacity: 0.4 }));
+    const stars = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0x22d3ee, size: 0.7, transparent: true, opacity: 0.4 }));
     scene.add(stars);
     camera.position.z = 500;
-    
     const animate = () => { 
-        requestAnimationFrame(animate); 
-        stars.position.z += 1.5; // Warp Effect
-        if(stars.position.z > 500) stars.position.z = -500;
-        renderer.render(scene, camera); 
+      requestAnimationFrame(animate); 
+      stars.position.z += 1.5; 
+      if(stars.position.z > 500) stars.position.z = -500;
+      renderer.render(scene, camera); 
     };
     animate();
+  }, []);
 
-    // 2. Cinematic Character-by-Character Text Reveal
-    const tl = gsap.timeline();
-    tl.to(".logo-char", { opacity: 1, y: 0, duration: 1.2, stagger: 0.1, ease: "expo.out" })
-      .to("#intro", { y: "-100%", delay: 0.6, duration: 1.4, ease: "expo.inOut", onComplete: () => fetchWalls(category, deviceType) });
+  useEffect(() => {
+    fetchWalls(category, deviceType);
   }, []);
 
   const fetchWalls = async (q, orientation) => {
@@ -47,124 +44,138 @@ export default function App() {
       const res = await fetch(`/api/get-wallpapers?query=${encodeURIComponent(q)}&orientation=${orientation}`);
       const data = await res.json();
       setWallpapers(data.photos || []);
-      // Animate images with a stagger delay
-      gsap.fromTo(".wall-card", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.12, ease: "power3.out" });
+      gsap.fromTo(".wall-card", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 });
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
-  const handleDeviceSwitch = (type) => {
-    setDeviceType(type);
-    fetchWalls(category, type);
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if(searchTerm.trim()) {
+      setCategory(searchTerm);
+      fetchWalls(searchTerm, deviceType);
+      setView('home');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#020202] text-white selection:bg-cyan-500/30">
+    <div className="min-h-screen bg-[#020202] text-white selection:bg-cyan-500/30 overflow-x-hidden">
+      <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none opacity-30" />
       
-      {/* Cinematic Intro Overlay */}
-      <div id="intro" className="fixed inset-0 z-[100] bg-black flex items-center justify-center overflow-hidden">
-        <canvas ref={canvasRef} className="absolute inset-0 opacity-50" />
-        <div className="relative z-10 text-center">
-            <h1 id="logo" className="text-5xl md:text-9xl font-black tracking-[0.5em] text-white uppercase italic text-glow flex gap-3">
-                {/* Character splitting for animation */}
-                {"ASTHEX".split("").map((char, index) => (
-                    <span key={index} className="logo-char inline-block opacity-0 translate-y-10">{char}</span>
-                ))}
-            </h1>
-            <p className="logo-char opacity-0 translate-y-10 text-cyan-400 tracking-[1.2em] text-[10px] mt-6 uppercase font-bold">Neural Visual Archive</p>
+      {/* Navbar with Search Bar */}
+      <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[94%] max-w-7xl z-50 glass-nav px-6 py-4 rounded-[2rem] flex flex-col lg:flex-row justify-between items-center gap-4 shadow-2xl border border-white/5">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
+          <Aperture className="text-cyan-400" size={24}/>
+          <span className="font-black tracking-widest text-xl italic uppercase font-sans">ASTHEXWALL</span>
         </div>
-      </div>
 
-      {/* Floating Glass Navbar */}
-      <nav className="fixed top-8 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl z-50 bg-white/[0.03] backdrop-blur-3xl border border-white/5 px-8 py-5 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-6 shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => fetchWalls('Abstract', deviceType)}>
-          <div className="w-10 h-10 bg-cyan-500 rounded-xl flex items-center justify-center group-hover:rotate-180 transition-all duration-700 shadow-[0_0_20px_rgba(0,243,255,0.4)]">
-            <Aperture className="text-black" size={24}/>
-          </div>
-          <span className="font-black tracking-[0.3em] text-2xl italic uppercase">ASTHEX</span>
-        </div>
+        {/* Search Bar - Fixed Location */}
+        <form onSubmit={handleSearch} className="relative w-full max-w-sm group">
+          <input 
+            type="text" 
+            placeholder="Search 4K Wallpapers..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 px-5 py-2 rounded-xl outline-none focus:border-cyan-500/50 transition-all text-sm font-sans"
+          />
+          <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-hover:text-cyan-400">
+            <Search size={18}/>
+          </button>
+        </form>
         
-        {/* Device Switcher */}
-        <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 scale-90 md:scale-100">
-            <button onClick={() => handleDeviceSwitch('portrait')} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all text-[10px] font-black tracking-widest uppercase ${deviceType === 'portrait' ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/30' : 'text-gray-500 hover:text-white'}`}>
-                <Smartphone size={14}/> Mobile
+        <div className="flex items-center gap-4">
+          <div className="flex bg-white/5 p-1 rounded-xl">
+            <button onClick={() => {setDeviceType('portrait'); fetchWalls(category, 'portrait')}} className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-2 ${deviceType === 'portrait' ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/30' : 'text-gray-500 hover:text-white'}`}>
+              <Smartphone size={14}/> Mobile
             </button>
-            <button onClick={() => handleDeviceSwitch('landscape')} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all text-[10px] font-black tracking-widest uppercase ${deviceType === 'landscape' ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/30' : 'text-gray-500 hover:text-white'}`}>
-                <Monitor size={14}/> Desktop
+            <button onClick={() => {setDeviceType('landscape'); fetchWalls(category, 'landscape')}} className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-2 ${deviceType === 'landscape' ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/30' : 'text-gray-500 hover:text-white'}`}>
+              <Monitor size={14}/> Desktop
             </button>
-        </div>
-
-        <div className="flex gap-6 overflow-x-auto no-scrollbar py-1 scale-90 md:scale-100">
-          {['Cyber', 'Abstract', 'Minimal', 'Nature'].map(cat => (
-            <button key={cat} onClick={() => {setCategory(cat); fetchWalls(cat, deviceType)}} className={`text-[9px] font-black uppercase tracking-[0.2em] transition-all relative ${category === cat ? 'text-cyan-400' : 'text-gray-500 hover:text-white'}`}>
-                {cat}
-                {category === cat && <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-cyan-400 blur-[1px]"></span>}
-            </button>
-          ))}
+          </div>
         </div>
       </nav>
 
       {view === 'home' ? (
-        <main className="pt-60 px-6 max-w-[1800px] mx-auto pb-40">
-          
-          <header className="mb-20 flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-10 pl-6">
-            <div>
-              <div className="flex items-center gap-2 mb-3 text-cyan-500 font-bold tracking-[0.5em] text-[10px] uppercase"><Zap size={14}/> Powered by Pixels</div>
-              <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter italic">/{category}</h2>
-            </div>
-            <p className="max-w-xs text-[10px] text-gray-500 leading-loose tracking-[0.2em] uppercase italic hidden md:block">Hand-curated visuals for OLED & UHD panels.</p>
+        <main className="relative z-10 pt-60 px-6 max-w-[1700px] mx-auto pb-40">
+          <header className="mb-16 border-l-4 border-cyan-500 pl-8">
+            <span className="text-cyan-500 text-[10px] font-bold tracking-[0.5em] uppercase flex items-center gap-2 font-sans"><Zap size={12}/> Premium Neural Feed</span>
+            <h2 className="text-5xl md:text-8xl font-black uppercase italic tracking-tighter font-sans">/{category}</h2>
+            <p className="max-w-xl text-[10px] text-gray-500 mt-2 uppercase tracking-[0.2em] leading-relaxed italic">
+              Experience hand-curated visual assets. Optimized for high-density OLED panels and professional UHD displays.
+            </p>
           </header>
 
           {loading ? (
-            <div className="h-[40vh] flex flex-col items-center justify-center gap-4 text-cyan-400 italic tracking-[1em] font-black animate-pulse uppercase text-[10px]"><Loader2 className="animate-spin" size={28}/> Reconstructing Reality</div>
+            <div className="h-96 flex flex-col items-center justify-center gap-4 text-cyan-400 font-black tracking-[1em] uppercase italic animate-pulse">Syncing Neural Grid</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 auto-rows-[450px]">
-              {wallpapers.map((p, index) => (
-                <div key={p.id} className={`wall-card relative group rounded-[2.5rem] overflow-hidden bg-zinc-900 border border-white/5 transition-all duration-700 hover:border-cyan-500/40 ${deviceType === 'landscape' && index % 5 === 0 ? 'md:col-span-2' : ''}`}>
-                  <img src={p.src.large2x || p.src.large} alt="4K Wallpaper" className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110 grayscale-[30%] group-hover:grayscale-0" loading="lazy" />
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 p-10 flex flex-col justify-end text-white">
-                    <div className="flex justify-between items-center border-t border-white/10 pt-6">
-                      <div className="truncate pr-4">
-                        <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold">Artist</p>
-                        <p className="text-sm font-black tracking-widest uppercase truncate italic">{p.photographer}</p>
-                      </div>
-                      <a href={p.src.original} target="_blank" rel="noreferrer" className="bg-white text-black p-4 rounded-3xl hover:bg-cyan-400 hover:scale-110 transition-all shadow-2xl flex-shrink-0">
-                        <Download size={20}/>
-                      </a>
+            /* Responsive Grid based on Device Type */
+            <div className={`grid gap-8 ${deviceType === 'portrait' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+              {wallpapers.map((p, i) => (
+                <div key={p.id} className={`wall-card relative group rounded-[2.5rem] overflow-hidden bg-zinc-900 border border-white/5 shadow-2xl transition-all duration-500 hover:border-cyan-500/40 ${deviceType === 'portrait' ? 'aspect-[9/16]' : 'aspect-[16/10]'}`}>
+                  <img src={p.src.large2x} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" loading="lazy" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent p-8 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex justify-between items-center border-t border-white/10 pt-4">
+                      <h4 className="text-[10px] font-black uppercase italic truncate pr-4 text-white font-sans">{p.photographer}</h4>
+                      <a href={p.src.original} target="_blank" className="bg-white text-black p-3 rounded-xl hover:bg-cyan-400 transition-colors shadow-xl"><Download size={18}/></a>
                     </div>
                   </div>
-                  <div className="absolute top-8 right-8 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 duration-500"><ArrowUpRight className="text-cyan-400" size={24}/></div>
                 </div>
               ))}
             </div>
           )}
         </main>
       ) : (
-        <div className="pt-56 px-12 max-w-5xl mx-auto min-h-screen text-white uppercase tracking-widest">
-            <h1 className="text-6xl font-black text-cyan-400 mb-8 italic tracking-tighter border-b border-white/10 pb-6">{view}</h1>
-            <p className="text-gray-500 leading-loose italic border-l-2 border-cyan-500 pl-8 space-y-4">Premium visuals. Optimized for OLED. Designed for visionaries. Asthex provides ultra-HD assets for personal digital curation.</p>
-            <button onClick={() => setView('home')} className="mt-16 bg-white text-black px-12 py-5 rounded-full font-black text-[10px] hover:bg-cyan-400 transition-all tracking-[0.2em]">Return to Gallery</button>
+        /* Detailed AdSense Approval Content Sections */
+        <div className="relative z-10 pt-60 px-12 max-w-4xl mx-auto min-h-screen text-white font-sans">
+            <h1 className="text-6xl font-black text-cyan-400 mb-8 italic uppercase tracking-tighter">{view}</h1>
+            <div className="space-y-8 text-gray-400 italic border-l-2 border-cyan-500 pl-8">
+              {view === 'about' && (
+                <>
+                  <p className="text-lg leading-relaxed">Asthexwall is a premier digital library dedicated to high-fidelity 4K wallpapers. We specialize in curating assets that are specifically optimized for OLED screens and modern UHD panels.</p>
+                  <p className="text-sm">Our mission is to provide creators and designers with easy access to royalty-free, high-resolution imagery through the professional Pexels API ecosystem. Every pixel is verified for quality and aesthetic brilliance.</p>
+                </>
+              )}
+              {view === 'privacy' && (
+                <>
+                  <p className="text-lg leading-relaxed">Your privacy is our priority. Asthexwall does not store personal identification data. We use standard web cookies to enhance user experience and serve relevant advertisements through Google AdSense.</p>
+                  <p className="text-sm">By using our archive, you agree to the collection of non-personal data for site optimization and traffic analysis. For more information, please contact our neural support team.</p>
+                </>
+              )}
+              {view === 'terms' && (
+                <>
+                  <p className="text-lg leading-relaxed">All images hosted on Asthexwall are provided via the Pexels License. These assets are free for personal use. Commercial redistribution of these files as a standalone product is strictly prohibited.</p>
+                  <p className="text-sm">We reserve the right to modify the visual archive and terms of service at any time. All photography remains the intellectual property of the respective artists on the Pexels platform.</p>
+                </>
+              )}
+            </div>
+            <button onClick={() => setView('home')} className="mt-16 bg-white text-black px-12 py-5 rounded-full font-black text-[10px] hover:bg-cyan-400 transition-all tracking-[0.2em] uppercase">Back to Archive</button>
         </div>
       )}
 
-      {/* Luxury Footer */}
-      <footer className="bg-black/50 border-t border-white/5 py-32 px-12 mt-40">
+      {/* Footer with more navigation links for AdSense */}
+      <footer className="relative z-10 bg-black/80 border-t border-white/5 py-32 px-12 mt-40">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-16">
           <div className="max-w-md">
-            <h3 className="text-4xl font-black tracking-[0.3em] mb-6 italic uppercase">ASTHEX</h3>
-            <p className="text-[10px] text-gray-600 uppercase tracking-widest leading-loose font-bold border-l-2 border-cyan-500 pl-8 italic">Neural Visual Archive. Powered by Pixels. Optimized for OLED panels.</p>
+            <h3 className="text-4xl font-black tracking-widest mb-6 italic uppercase font-sans text-glow">ASTHEXWALL</h3>
+            <p className="text-[10px] text-gray-600 font-bold tracking-[0.4em] leading-loose uppercase italic border-l-2 border-cyan-500 pl-6 font-sans">
+              Neural Visual Archive. Optimized for OLED. Powered by Pexels API. Every pixel is a masterpiece in the digital void.
+            </p>
           </div>
-          <div className="flex gap-16 text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">
-             <div className="flex flex-col gap-5">
-                <span className="text-white mb-2 tracking-[1em]">Archive</span>
-                <button onClick={() => setView('about')} className="text-left hover:text-cyan-400">Vision</button>
-                <button onClick={() => setView('privacy')} className="text-left hover:text-cyan-400">Privacy Neural</button>
-             </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-12 text-[10px] font-black uppercase text-gray-500 tracking-widest">
+            <div className="flex flex-col gap-4">
+              <span className="text-white mb-2 tracking-[1em]">Pages</span>
+              <button onClick={() => setView('about')} className="hover:text-cyan-400 text-left flex items-center gap-2"><Info size={12}/> About</button>
+              <button onClick={() => setView('privacy')} className="hover:text-cyan-400 text-left flex items-center gap-2"><Shield size={12}/> Privacy</button>
+              <button onClick={() => setView('terms')} className="hover:text-cyan-400 text-left flex items-center gap-2"><FileText size={12}/> Terms</button>
+            </div>
+            <div className="flex flex-col gap-4">
+              <span className="text-white mb-2 tracking-[1em]">Archive</span>
+              <button onClick={() => {setCategory('Cyberpunk'); fetchWalls('Cyberpunk', deviceType); setView('home')}} className="hover:text-cyan-400 text-left">Cyberpunk</button>
+              <button onClick={() => {setCategory('Amoled'); fetchWalls('Amoled', deviceType); setView('home')}} className="hover:text-cyan-400 text-left">OLED Dark</button>
+            </div>
           </div>
         </div>
-        <div className="mt-32 pt-12 border-t border-white/5 text-center text-[9px] text-gray-800 font-black tracking-[1.5em] uppercase">© 2024 ASTHEX ARCHIVE | NEURAL VISUALS</div>
+        <div className="mt-24 pt-12 border-t border-white/5 text-center text-[9px] text-gray-800 font-black tracking-[1.5em] uppercase font-sans">© 2026 ASTHEXWALL | NEURAL ARCHIVE | ALL RIGHTS RESERVED</div>
       </footer>
     </div>
   );
-                }
-              
+}
