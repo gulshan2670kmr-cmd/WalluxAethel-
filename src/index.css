@@ -4,14 +4,26 @@
 
 @layer base {
   body {
-    @apply bg-[#020202] text-white;
+    @apply bg-[#020202] text-white antialiased;
     margin: 0;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    /* Smooth scrolling for mobile */
+    -webkit-overflow-scrolling: touch;
   }
 }
 
-/* Custom Scrollbar Hide */
+/* 1. Cinematic Text Glow */
+.text-glow {
+  text-shadow: 0 0 40px rgba(0, 243, 255, 0.5);
+}
+
+/* 2. Glassmorphism Effect (For Navbar) */
+.backdrop-blur-3xl {
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+}
+
+/* 3. Hide Scrollbar (Clean Look) */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -20,19 +32,51 @@
   scrollbar-width: none;
 }
 
-/* Text Glow Effect for Logo */
-.text-glow {
-  text-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+/* 4. Bento Grid Fix */
+.grid {
+  display: grid;
+  gap: 2rem;
 }
 
-/* Smooth Animation Transitions */
+/* 5. Mobile Layout Smoothing */
+@media (max-width: 768px) {
+  .grid {
+    /* Mobile par grid ko simple 1-column rakhenge for readability */
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    gap: 1.5rem;
+    padding: 0 10px;
+  }
+  
+  /* Mobile par layout ko force karenge ki wo stretch na ho */
+  .md\:col-span-2, .md\:row-span-2 {
+    grid-column: span 1 / span 1 !important;
+    grid-row: span 1 / span 1 !important;
+  }
+}
+
+/* 6. Advanced Hover Animations */
 .wall-card {
   transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-/* Responsive Grid Adjustments */
-@media (max-width: 768px) {
-  .wall-card {
-    @apply col-span-1 row-span-1 !important;
-  }
+.wall-card img {
+  /* High-end transition for grayscale to color */
+  transition: transform 1.8s cubic-bezier(0.19, 1, 0.22, 1), 
+              filter 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* 7. Starfield Canvas Layering */
+canvas {
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 8. Loader Animation */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; text-shadow: 0 0 20px rgba(0, 243, 255, 0.8); }
+}
+
+.animate-pulse {
+  animation: pulse-glow 2s infinite;
 }
