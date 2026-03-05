@@ -1,211 +1,285 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Aperture, Download, Search, Loader2, Monitor, Smartphone, Shield, BookOpen, Info, Scale, Mail } from 'lucide-react';
-import * as THREE from 'three';
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Search, Download, Sparkles, Loader2, Moon, Mountain, 
+  Box, Stars, Ghost, X, Info, ShieldCheck, Monitor, Smartphone, 
+  ArrowRight, Zap, Heart, Bookmark, Share2, Copy, Check, Mail, Scale, FileText
+} from 'lucide-react';
 
-export default function App() {
+// --- NEW SECTIONS FOR ADSENSE COMPLIANCE ---
+const LEGAL_CONTENT = {
+  privacy: {
+    title: "Privacy Policy",
+    content: (
+      <div className="space-y-6">
+        <p>Last Updated: October 2023. At Wallux, we prioritize your privacy. This policy outlines how we handle data.</p>
+        <h3 className="text-white font-bold">1. Data Collection</h3>
+        <p>We do not require user accounts. We use local storage to save your "Liked" wallpapers locally on your device. We do not store this data on our servers.</p>
+        <h3 className="text-white font-bold">2. Cookies & Ads</h3>
+        <p>We use Google AdSense to serve ads. Google may use cookies (DART cookies) to serve ads based on your visit to this and other sites on the internet.</p>
+        <h3 className="text-white font-bold">3. Third Party Links</h3>
+        <p>Our assets are sourced via Pexels API. When downloading, you are subject to Pexels' terms of service.</p>
+      </div>
+    )
+  },
+  terms: {
+    title: "Terms of Service",
+    content: (
+      <div className="space-y-6">
+        <p>By using Wallux, you agree to the following terms:</p>
+        <ul className="list-disc ml-5 space-y-2">
+          <li>The wallpapers provided are for personal use as device backgrounds.</li>
+          <li>Commercial redistribution of these assets without attribution to the original photographer is prohibited.</li>
+          <li>You may not use our "Search" functionality for automated data scraping.</li>
+        </ul>
+      </div>
+    )
+  },
+  contact: {
+    title: "Contact Us",
+    content: (
+      <div className="space-y-6">
+        <p>Have questions regarding copyright or technical issues? Reach out to our team.</p>
+        <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+          <label className="block text-[10px] uppercase tracking-widest mb-2">Email Address</label>
+          <input type="email" placeholder="your@email.com" className="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-4 outline-none focus:border-cyan-500 transition-colors" />
+          <label className="block text-[10px] uppercase tracking-widest mb-2">Message</label>
+          <textarea rows="4" className="w-full bg-black/50 border border-white/10 p-4 rounded-xl outline-none focus:border-cyan-500 transition-colors"></textarea>
+          <button className="w-full py-4 bg-white text-black font-black text-[10px] tracking-widest uppercase rounded-xl mt-4 hover:bg-cyan-500 transition-colors">Send Inquiry</button>
+        </div>
+      </div>
+    )
+  }
+};
+
+const CATEGORIES = [
+  { name: "Curated", query: "4k wallpaper aesthetic", icon: <Sparkles size={18} /> },
+  { name: "Landscape", query: "8k nature cinematic", icon: <Mountain size={18} /> },
+  { name: "Abstract", query: "3d minimal render white", icon: <Box size={18} /> },
+  { name: "Amoled", query: "pure black amoled wallpaper", icon: <Moon size={18} /> },
+  { name: "Saved", query: "SAVED_ITEMS", icon: <Bookmark size={18} /> }
+];
+
+const App = () => {
   const [wallpapers, setWallpapers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("Curated");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [orientation, setOrientation] = useState("landscape");
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [category, setCategory] = useState('Amoled');
-  const [deviceType, setDeviceType] = useState(window.innerWidth < 768 ? 'portrait' : 'landscape');
-  const [view, setView] = useState('home'); 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [introVisible, setIntroVisible] = useState(true);
-  const canvasRef = useRef(null);
-  const observer = useRef();
-
-  // 1. SAFE 3D NEURAL ENGINE
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    let scene, camera, renderer, points;
-    let animationFrameId;
-
-    try {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ 
-        canvas: canvasRef.current, 
-        alpha: true, 
-        antialias: true 
-      });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(window.innerWidth, window.innerHeight);
-
-      const nodesCount = 1000;
-      const geometry = new THREE.BufferGeometry();
-      const positions = new THREE.Float32BufferAttribute(nodesCount * 3, 3);
-      for (let i = 0; i < nodesCount; i++) {
-        positions.setXYZ(i, THREE.MathUtils.randFloatSpread(2000), THREE.MathUtils.randFloatSpread(2000), THREE.MathUtils.randFloatSpread(2000));
-      }
-      geometry.setAttribute('position', positions);
-      const pointsMaterial = new THREE.PointsMaterial({ size: 2, color: 0x22d3ee, transparent: true, opacity: 0.3 });
-      points = new THREE.Points(geometry, pointsMaterial);
-      scene.add(points);
-      camera.position.z = 400;
-
-      const animate = () => {
-        animationFrameId = requestAnimationFrame(animate);
-        points.rotation.y += 0.0005;
-        renderer.render(scene, camera);
-      };
-      animate();
-
-      const handleResize = () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      };
-      window.addEventListener('resize', handleResize);
-    } catch (e) {
-      console.error("Three.js fail:", e);
-    }
-
-    const timer = setTimeout(() => setIntroVisible(false), 3800);
-
-    return () => {
-      clearTimeout(timer);
-      cancelAnimationFrame(animationFrameId);
-      if(renderer) renderer.dispose();
-      window.removeEventListener('resize', () => {});
-    };
-  }, []);
-
-  // 2. FETCH WALLPAPERS (Check if API URL is correct)
-  const fetchWalls = useCallback(async (q, orientation, pageNum, append = false) => {
-    setLoading(true);
-    try {
-      // NOTE: Ensure your API route is at /api/get-wallpapers.js on Vercel
-      const res = await fetch(`/api/get-wallpapers?query=${encodeURIComponent(q)}&orientation=${orientation}&page=${pageNum}`);
-      const data = await res.json();
-      if (data.photos) {
-        setWallpapers(prev => append ? [...prev, ...data.photos] : data.photos);
-        setHasMore(data.photos.length > 0);
-      }
-    } catch (e) { 
-      console.error("Fetch error:", e); 
-    } finally { 
-      setLoading(false); 
-    }
-  }, []);
+  const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [view, setView] = useState('gallery'); // gallery, privacy, terms, contact
+  const [copiedId, setCopiedId] = useState(null);
+  const [savedWallpapers, setSavedWallpapers] = useState(() => {
+    const localData = typeof window !== 'undefined' ? localStorage.getItem('wallux_saved') : null;
+    return localData ? JSON.parse(localData) : [];
+  });
 
   useEffect(() => {
-    if (!introVisible) fetchWalls(category, deviceType, 1);
-  }, [introVisible, category, deviceType, fetchWalls]);
+    localStorage.setItem('wallux_saved', JSON.stringify(savedWallpapers));
+  }, [savedWallpapers]);
 
-  const lastElementRef = useCallback(node => {
-    if (loading) return;
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage(prev => {
-          const next = prev + 1;
-          fetchWalls(category, deviceType, next, true);
-          return next;
-        });
-      }
-    });
-    if (node) observer.current.observe(node);
-  }, [loading, hasMore, category, deviceType, fetchWalls]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if(searchTerm.trim()) {
-      setCategory(searchTerm);
-      setPage(1);
-      setView('home');
-      fetchWalls(searchTerm, deviceType, 1, false);
+  const toggleSave = (e, img) => {
+    e.stopPropagation();
+    const isSaved = savedWallpapers.find(item => item.id === img.id);
+    if (isSaved) {
+      setSavedWallpapers(prev => prev.filter(item => item.id !== img.id));
+    } else {
+      setSavedWallpapers(prev => [img, ...prev]);
     }
   };
 
+  const copyToClipboard = (e, url, id) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const downloadImage = async (url, id) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `Wallux-${id}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      window.open(url, '_blank');
+    }
+  };
+
+  const fetchWallpapers = useCallback(async (isNewSearch = false) => {
+    if (activeCategory === "Saved") {
+      setWallpapers(savedWallpapers);
+      return;
+    }
+    if (loading) return;
+    setLoading(true);
+    try {
+      const query = searchQuery || CATEGORIES.find(c => c.name === activeCategory).query;
+      const targetPage = isNewSearch ? 1 : page;
+      // Note: Ensure your /api/pexels route is configured correctly
+      const response = await fetch(`/api/pexels?query=${encodeURIComponent(query)}&page=${targetPage}&orientation=${orientation}`);
+      const data = await response.json();
+      if (data.photos) {
+        const formatted = data.photos.map(p => ({
+          id: p.id, url: p.src.large2x, hd: p.src.original, photographer: p.photographer
+        }));
+        setWallpapers(prev => isNewSearch ? formatted : [...prev, ...formatted]);
+        setPage(targetPage + 1);
+      }
+    } catch (e) { console.error(e); } finally { setLoading(false); }
+  }, [activeCategory, searchQuery, page, loading, orientation, savedWallpapers]);
+
+  useEffect(() => { fetchWallpapers(true); }, [activeCategory, orientation]);
+
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-cyan-500/30 overflow-x-hidden">
-      {/* CANVAS WITH Z-INDEX FIX */}
-      <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none opacity-40 bg-black" />
+    <div className="min-h-screen bg-[#020203] text-zinc-300 font-sans selection:bg-cyan-500/30 overflow-x-hidden">
+      <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row relative z-10">
+        
+        {/* Sidebar */}
+        <aside className="w-full lg:w-85 p-8 lg:h-screen lg:sticky lg:top-0 border-r border-white/5 bg-black/40 backdrop-blur-3xl">
+          <div className="flex items-center gap-4 mb-12 cursor-pointer" onClick={() => setView('gallery')}>
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
+               <Zap className="text-black fill-black" size={24} />
+            </div>
+            <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase">Wallux</h1>
+          </div>
+          
+          <div className="space-y-8">
+            <div className="relative group">
+              <div className="relative flex items-center bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-1">
+                <Search className="text-zinc-600 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                <input 
+                  className="w-full bg-transparent border-none py-4 px-3 text-sm text-white outline-none placeholder:text-zinc-700" 
+                  placeholder="Search assets..." 
+                  onKeyDown={(e) => e.key === 'Enter' && fetchWallpapers(true)}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
 
-      {/* INTRO LAYER */}
-      {introVisible && (
-        <div className="fixed inset-0 z-[200] bg-black flex items-center justify-center overflow-hidden">
-          <div className="relative w-full flex flex-col items-center justify-center px-6">
-            <h1 className="text-[14vw] md:text-[12rem] font-black tracking-[0.1em] italic text-cyan-400 uppercase leading-[0.8] m-0 drop-shadow-[0_0_70px_rgba(34,211,238,0.9)] animate-pulse text-center">
-              ASTHEXWALL
-            </h1>
-            <p className="text-cyan-800 text-[10px] md:text-sm tracking-[1.5em] font-bold uppercase mt-6 pl-[1.5em] opacity-70 leading-none text-center">
-              Neural Grid Protocol
-            </p>
-            <div className="mt-24 w-32 md:w-80 h-[1px] bg-white/10 rounded-full overflow-hidden relative">
-              <div className="h-full bg-cyan-500 animate-[loading_2s_ease-in-out_infinite] w-1/2"></div>
+            <nav className="space-y-2">
+              {CATEGORIES.map((c) => (
+                <button key={c.name} onClick={() => { setActiveCategory(c.name); setView('gallery'); }} 
+                  className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all ${activeCategory === c.name && view === 'gallery' ? 'bg-white text-black font-bold' : 'hover:bg-white/5 opacity-60'}`}>
+                  <span className="flex items-center gap-4 text-[10px] tracking-widest uppercase">{c.icon} {c.name}</span>
+                  {c.name === "Saved" && savedWallpapers.length > 0 && <span className="text-[10px] bg-cyan-500 text-black px-2 py-0.5 rounded-full">{savedWallpapers.length}</span>}
+                </button>
+              ))}
+            </nav>
+
+            {/* Compliance Navigation */}
+            <div className="pt-8 border-t border-white/5 grid grid-cols-2 gap-4">
+              <button onClick={() => setView('privacy')} className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest ${view === 'privacy' ? 'text-cyan-400 border-cyan-500/30' : ''}`}><ShieldCheck size={18}/> Privacy</button>
+              <button onClick={() => setView('terms')} className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest ${view === 'terms' ? 'text-cyan-400 border-cyan-500/30' : ''}`}><FileText size={18}/> Terms</button>
+              <button onClick={() => setView('contact')} className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest ${view === 'contact' ? 'text-cyan-400 border-cyan-500/30' : ''}`}><Mail size={18}/> Contact</button>
+              <button onClick={() => setView('about')} className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest ${view === 'about' ? 'text-cyan-400 border-cyan-500/30' : ''}`}><Info size={18}/> Mission</button>
             </div>
           </div>
-        </div>
-      )}
+        </aside>
 
-      {/* CONTENT LAYER */}
-      <div className={`${introVisible ? 'opacity-0' : 'opacity-100 transition-opacity duration-1000'}`}>
-        <nav className="fixed top-0 left-0 right-0 z-[100] flex justify-center pt-6 px-4 pointer-events-none">
-          <div className="w-full max-w-5xl bg-black/40 backdrop-blur-3xl border border-white/10 px-6 py-4 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-4 pointer-events-auto shadow-2xl">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => {setView('home'); setCategory('Amoled')}}>
-              <Aperture className="text-cyan-400" size={24}/>
-              <span className="font-black tracking-tighter text-2xl italic uppercase">ASTHEXWALL</span>
-            </div>
-            <form onSubmit={handleSearch} className="relative w-full max-w-xs group">
-              <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-white/5 border border-white/10 px-5 py-2.5 rounded-2xl outline-none text-xs italic focus:border-cyan-500/50" />
-              <button type="submit" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"><Search size={18}/></button>
-            </form>
-            <div className="flex bg-zinc-900/60 p-1 rounded-2xl border border-white/5 scale-90">
-              <button onClick={() => {setDeviceType('portrait'); setPage(1); fetchWalls(category, 'portrait', 1)}} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ${deviceType === 'portrait' ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/40' : 'text-gray-400'}`}><Smartphone size={14}/> Mobile</button>
-              <button onClick={() => {setDeviceType('landscape'); setPage(1); fetchWalls(category, 'landscape', 1)}} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ${deviceType === 'landscape' ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/40' : 'text-gray-400'}`}><Monitor size={14}/> Desktop</button>
-            </div>
-          </div>
-        </nav>
-
-        <main className="relative z-10 pt-72 md:pt-80 px-4 md:px-12 max-w-[1800px] mx-auto pb-20">
-          {view === 'home' ? (
+        {/* Main Content */}
+        <main className="flex-1 p-8 lg:p-16">
+          {view === 'gallery' ? (
             <>
-              <header className="mb-12 border-l-[6px] border-cyan-500 pl-8">
-                <h2 className="text-6xl md:text-[10rem] font-black uppercase italic tracking-tighter text-cyan-400 leading-[0.85] py-4 truncate">/{category}</h2>
-                <p className="text-gray-500 text-[10px] md:text-sm tracking-[0.5em] uppercase mt-4">Premium Curated Assets</p>
+              <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-20">
+                <div>
+                  <h2 className="text-7xl lg:text-9xl font-black text-white tracking-tighter leading-[0.85] italic mb-6">
+                    {activeCategory === "Saved" ? "COLLECTION" : "PREMIUM"} <br/><span className="text-zinc-800 outline-text">VISUALS.</span>
+                  </h2>
+                  <p className="text-zinc-500 text-xs tracking-widest uppercase">High-fidelity assets sourced from global creators.</p>
+                </div>
+                
+                <div className="flex bg-zinc-900/50 p-1.5 rounded-[2rem] border border-white/5">
+                  <button onClick={() => setOrientation('landscape')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all ${orientation === 'landscape' ? 'bg-white text-black shadow-xl' : 'text-zinc-500'}`}>DESKTOP</button>
+                  <button onClick={() => setOrientation('portrait')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all ${orientation === 'portrait' ? 'bg-white text-black shadow-xl' : 'text-zinc-500'}`}>MOBILE</button>
+                </div>
               </header>
 
-              <div className={`grid gap-5 md:gap-10 ${deviceType === 'portrait' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
-                {wallpapers.map((p, index) => {
-                  const isLast = wallpapers.length === index + 1;
-                  return (
-                    <div key={p.id} ref={isLast ? lastElementRef : null} className={`group relative rounded-[2.5rem] overflow-hidden bg-zinc-900 border border-white/10 transition-all duration-700 hover:scale-[1.03] ${deviceType === 'portrait' ? 'aspect-[9/16]' : 'aspect-[16/10]'}`}>
-                      <img src={p.src.large2x} className="w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110" loading="lazy" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent p-6 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-500">
-                        <div className="flex justify-between items-center border-t border-white/10 pt-4 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                          <span className="text-[10px] font-black uppercase italic truncate text-gray-400 max-w-[100px]">{p.photographer}</span>
-                          <a href={p.src.original} target="_blank" className="bg-white text-black p-3 rounded-2xl hover:bg-cyan-400 shadow-xl active:scale-90 transition-all"><Download size={20}/></a>
-                        </div>
+              <div className={`grid gap-12 ${orientation === 'landscape' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2 lg:grid-cols-3'}`}>
+                {wallpapers.map((img, i) => (
+                  <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={`${img.id}-${i}`} className="group relative">
+                    <div 
+                      className={`relative rounded-[2.5rem] overflow-hidden bg-zinc-900 border border-white/5 cursor-pointer ${orientation === 'landscape' ? 'aspect-[16/10]' : 'aspect-[9/16]'}`}
+                      onClick={() => setSelectedImage(img)}
+                    >
+                      <img src={img.url} alt={`Wallpaper by ${img.photographer}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
+                      
+                      {/* Floating Actions */}
+                      <div className="absolute top-6 right-6 flex flex-col gap-3 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500">
+                        <button onClick={(e) => toggleSave(e, img)} className={`p-4 rounded-full backdrop-blur-3xl border border-white/10 ${savedWallpapers.find(s => s.id === img.id) ? 'bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20' : 'bg-black/40 text-white hover:bg-white hover:text-black'}`}>
+                          <Heart size={18} fill={savedWallpapers.find(s => s.id === img.id) ? "currentColor" : "none"} />
+                        </button>
+                        <button onClick={(e) => copyToClipboard(e, img.hd, img.id)} className="p-4 rounded-full bg-black/40 backdrop-blur-3xl text-white border border-white/10 hover:bg-white hover:text-black transition-all relative">
+                          {copiedId === img.id ? <Check size={18} className="text-green-400" /> : <Share2 size={18} />}
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); downloadImage(img.hd, img.id); }} className="p-4 rounded-full bg-black/40 backdrop-blur-3xl text-white border border-white/10 hover:bg-white hover:text-black transition-all">
+                          <Download size={18} />
+                        </button>
                       </div>
                     </div>
-                  );
-                })}
+                  </motion.div>
+                ))}
               </div>
+
+              {activeCategory !== "Saved" && (
+                <div className="mt-32 flex justify-center pb-20">
+                  <button onClick={() => fetchWallpapers(false)} className="px-20 py-6 border border-white/10 rounded-full text-[10px] font-black tracking-[0.5em] hover:bg-white hover:text-black transition-all uppercase">
+                    {loading ? <Loader2 className="animate-spin" /> : "Discover More"}
+                  </button>
+                </div>
+              )}
             </>
           ) : (
-            /* PAGES CONTENT */
-            <div className="pt-10 px-6 max-w-4xl mx-auto min-h-screen bg-zinc-900/40 p-10 rounded-[3rem] border border-white/5 backdrop-blur-xl">
-              <h1 className="text-4xl md:text-5xl font-black text-cyan-400 mb-8 italic uppercase tracking-tighter border-b border-white/10 pb-4">{view} Protocol</h1>
-              <p className="text-gray-300 leading-relaxed text-lg mb-6">This section contains our legal and vision protocol. All visual assets provided on AsthexWall are legally sourced via the Pexels API ecosystem. We ensure high-fidelity OLED optimization for all assets.</p>
-              <button onClick={() => setView('home')} className="mt-12 bg-white text-black px-12 py-4 rounded-full font-black uppercase text-[11px] tracking-widest hover:bg-cyan-400 transition-all shadow-xl shadow-white/5">Back to Grid</button>
-            </div>
+            /* Compliance Views */
+             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-3xl py-12">
+                <h2 className="text-4xl font-black text-white mb-10 italic uppercase border-b border-white/10 pb-6">
+                  {view === 'about' ? 'Our Mission' : LEGAL_CONTENT[view]?.title || view}
+                </h2>
+                
+                <div className="text-zinc-500 text-sm leading-relaxed">
+                  {view === 'about' ? (
+                    <div className="space-y-6">
+                      <p>Wallux is a premier destination for digital aesthetic curation. We bridge the gap between world-class photography and your personal workspace.</p>
+                      <p>Our platform is built for speed, privacy, and visual excellence. Every asset is hand-picked for its composition, lighting, and resolution.</p>
+                    </div>
+                  ) : LEGAL_CONTENT[view]?.content}
+                </div>
+                
+                <button onClick={() => setView('gallery')} className="mt-16 text-white border-b-2 border-white pb-2 font-black text-[10px] tracking-widest uppercase">Back to Visuals</button>
+             </motion.div>
           )}
         </main>
-
-        <footer className="relative z-10 bg-black py-40 text-center border-t border-white/5">
-            <h3 className="text-4xl font-black italic text-cyan-400 tracking-[0.5em] uppercase mb-12">ASTHEXWALL</h3>
-            <div className="flex flex-wrap justify-center gap-10 md:gap-20 text-[10px] font-black uppercase text-gray-500 tracking-[0.3em] mb-12">
-              <button onClick={() => setView('vision')} className="hover:text-cyan-400 uppercase">Vision</button>
-              <button onClick={() => setView('privacy')} className="hover:text-cyan-400 uppercase">Privacy</button>
-              <button onClick={() => setView('terms')} className="hover:text-cyan-400 uppercase">Terms</button>
-              <a href="mailto:contact@asthexwall.com" className="hover:text-cyan-400 uppercase">Contact</a>
-            </div>
-            <p className="text-[9px] text-zinc-800 tracking-[1.5em] uppercase italic">© 2026 Neural Grid Protocol</p>
-        </footer>
       </div>
+
+      {/* Modal View */}
+      <AnimatePresence>
+        {selectedImage && (
+          <div className="fixed inset-0 z-50 bg-black/98 backdrop-blur-3xl flex items-center justify-center p-8" onClick={() => setSelectedImage(null)}>
+             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }} className="relative max-w-6xl w-full text-center" onClick={e => e.stopPropagation()}>
+                <img src={selectedImage.hd} alt="Preview" className="w-full max-h-[70vh] object-contain rounded-[2rem] mb-10 shadow-2xl" />
+                <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                  <div className="text-left">
+                    <h4 className="text-white text-4xl font-black italic tracking-tighter uppercase">Source Origin</h4>
+                    <p className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase mt-2">Asset ID: {selectedImage.id} • Photographer: {selectedImage.photographer}</p>
+                  </div>
+                  <div className="flex gap-4 w-full md:w-auto">
+                    <button onClick={() => downloadImage(selectedImage.hd, selectedImage.id)} className="flex-1 md:px-12 py-5 bg-white text-black font-black text-[10px] tracking-widest uppercase rounded-2xl hover:bg-cyan-500 transition-all">Download Master</button>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedImage(null)} className="absolute -top-12 right-0 text-white opacity-20 hover:opacity-100"><X size={32}/></button>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
-                                }
+};
+
+export default App;
+    
