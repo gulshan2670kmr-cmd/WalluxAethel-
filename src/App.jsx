@@ -153,7 +153,7 @@ export default function App() {
             <button onClick={() => setView('privacy')} className="hover:text-cyan-400">Privacy Neural</button>
           </div>
         </div>
-        <div className="mt-32 pt-16 border-t border-white/5 text-center text-[10px] text-gray-800 font-black tracking-[2em] uppercase italic italic italic italic">© 2026 ASTHEXWALL | NEURAL ARCHIVE</div>
+        <div className="mt-32 pt-16 border-t border-white/5 text-center text-[10px] text-gray-800 font-black tracking-[2em] uppercase italic">© 2026 ASTHEXWALL | NEURAL ARCHIVE</div>
       </footer>
     </div>
   );
