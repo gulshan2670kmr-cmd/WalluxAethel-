@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 .text-glow { text-shadow: 0 0 15px rgba(0, 243, 255, 0.6); }
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 10px; }
-.break-inside-avoid { break-inside: avoid; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+.break-inside-avoid { break-inside: avoid; }
+body { overflow-x: hidden; background: #030305; }
