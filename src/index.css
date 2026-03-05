@@ -2,81 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-[#020202] text-white antialiased;
-    margin: 0;
-    overflow-x: hidden;
-    /* Smooth scrolling for mobile */
-    -webkit-overflow-scrolling: touch;
-  }
+/* Base Reset */
+:root {
+  background-color: #000000;
+  color-scheme: dark;
 }
 
-/* 1. Cinematic Text Glow */
-.text-glow {
-  text-shadow: 0 0 40px rgba(0, 243, 255, 0.5);
+body {
+  margin: 0;
+  padding: 0;
+  background-color: black;
+  color: white;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* 2. Glassmorphism Effect (For Navbar) */
-.backdrop-blur-3xl {
-  backdrop-filter: blur(50px);
-  -webkit-backdrop-filter: blur(50px);
+/* Intro Loading Animation Logic */
+@keyframes loading {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(50%); }
+  100% { transform: translateX(200%); }
 }
 
-/* 3. Hide Scrollbar (Clean Look) */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* Custom Utilities for Premium Look */
+.glass-nav {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-/* 4. Bento Grid Fix */
-.grid {
-  display: grid;
-  gap: 2rem;
+/* Hide Scrollbar for cleaner look but allow scrolling */
+::-webkit-scrollbar {
+  width: 4px;
 }
 
-/* 5. Mobile Layout Smoothing */
-@media (max-width: 768px) {
-  .grid {
-    /* Mobile par grid ko simple 1-column rakhenge for readability */
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-    gap: 1.5rem;
-    padding: 0 10px;
-  }
-  
-  /* Mobile par layout ko force karenge ki wo stretch na ho */
-  .md\:col-span-2, .md\:row-span-2 {
-    grid-column: span 1 / span 1 !important;
-    grid-row: span 1 / span 1 !important;
-  }
+::-webkit-scrollbar-track {
+  background: #000;
 }
 
-/* 6. Advanced Hover Animations */
-.wall-card {
-  transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+::-webkit-scrollbar-thumb {
+  background: #22d3ee;
+  border-radius: 10px;
 }
 
-.wall-card img {
-  /* High-end transition for grayscale to color */
-  transition: transform 1.8s cubic-bezier(0.19, 1, 0.22, 1), 
-              filter 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+/* Prevent text clipping in high-tracking headings */
+h1, h2 {
+  line-height: 1.2 !important;
+  display: block;
 }
 
-/* 7. Starfield Canvas Layering */
-canvas {
-  pointer-events: none;
-  z-index: 1;
+/* Smooth Spinning for the Logo icon */
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
 }
 
-/* 8. Loader Animation */
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.7; text-shadow: 0 0 20px rgba(0, 243, 255, 0.8); }
-}
-
-.animate-pulse {
-  animation: pulse-glow 2s infinite;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
