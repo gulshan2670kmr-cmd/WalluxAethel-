@@ -1,271 +1,185 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, Download, Sparkles, Loader2, Moon, Mountain, 
-  Box, Stars, Ghost, X, Info, ShieldCheck, Monitor, Smartphone, 
-  ArrowRight, Zap, Heart, Bookmark, Share2, Copy, Check 
-} from 'lucide-react';
+import { useState, useEffect, useRef } from 'react'
+import gsap from 'gsap'
+import * as THREE from 'three'
+import { Aperture, Download, Search, Loader2, Maximize, Shield, Newspaper, Image as ImageIcon } from 'lucide-react'
 
-const CATEGORIES = [
-  { name: "Curated", query: "4k wallpaper aesthetic", icon: <Sparkles size={18} /> },
-  { name: "Landscape", query: "8k nature cinematic", icon: <Mountain size={18} /> },
-  { name: "Abstract", query: "3d minimal render white", icon: <Box size={18} /> },
-  { name: "Amoled", query: "pure black amoled wallpaper", icon: <Moon size={18} /> },
-  { name: "Saved", query: "SAVED_ITEMS", icon: <Bookmark size={18} /> }
-];
-
-const App = () => {
+export default function App() {
   const [wallpapers, setWallpapers] = useState([]);
-  const [activeCategory, setActiveCategory] = useState("Curated");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [orientation, setOrientation] = useState("landscape");
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [view, setView] = useState('gallery');
-  const [copiedId, setCopiedId] = useState(null);
-  const [savedWallpapers, setSavedWallpapers] = useState(() => {
-    // Updated local storage key for Asthexwall
-    const localData = localStorage.getItem('asthexwall_saved');
-    return localData ? JSON.parse(localData) : [];
-  });
+  const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState('4K Trends');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [view, setView] = useState('home');
+  const canvasRef = useRef(null);
 
-  // GSAP REFS
-  const sidebarRef = useRef(null);
-  const mainTitleRef = useRef(null);
+  const getOrientation = () => window.innerWidth < 768 ? 'portrait' : 'landscape';
 
-  // Initial Load Animation (GSAP)
   useEffect(() => {
-    const gsap = window.gsap;
-    if (gsap) {
-      const tl = gsap.timeline();
-      
-      tl.fromTo(sidebarRef.current, 
-        { x: -50, opacity: 0 }, 
-        { x: 0, opacity: 1, duration: 1, ease: "power4.out" }
-      )
-      .fromTo(mainTitleRef.current, 
-        { y: 50, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 1.2, ease: "expo.out" }, 
-        "-=0.5"
-      );
-    }
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    const geometry = new THREE.BufferGeometry();
+    const vertices = [];
+    for(let i=0; i<5000; i++) vertices.push(THREE.MathUtils.randFloatSpread(2000));
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    const stars = new THREE.Points(geometry, new THREE.PointsMaterial({color: 0x00f3ff, size: 1.2}));
+    scene.add(stars);
+    camera.position.z = 500;
+    const animate = () => { requestAnimationFrame(animate); stars.rotation.y += 0.001; renderer.render(scene, camera); };
+    animate();
+
+    gsap.to("#logo", { opacity: 1, scale: 1.1, duration: 1.5 });
+    gsap.to("#intro", { y: "-100%", delay: 2.2, duration: 1, ease: "expo.inOut", onComplete: () => fetchWalls(category) });
   }, []);
 
-  // Stagger effect for grid items
-  useEffect(() => {
-    const gsap = window.gsap;
-    if (gsap && wallpapers.length > 0) {
-      gsap.fromTo(".wallpaper-card", 
-        { y: 30, opacity: 0 },
-        { 
-          y: 0, 
-          opacity: 1, 
-          stagger: 0.1, 
-          duration: 0.8, 
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: ".wallpaper-grid",
-            start: "top 85%"
-          }
-        }
-      );
-    }
-  }, [wallpapers]);
-
-  // Sync LocalStorage
-  useEffect(() => {
-    localStorage.setItem('asthexwall_saved', JSON.stringify(savedWallpapers));
-  }, [savedWallpapers]);
-
-  // --- Logic Functions ---
-  const toggleSave = (e, img) => {
-    e.stopPropagation();
-    const isSaved = savedWallpapers.find(item => item.id === img.id);
-    if (isSaved) {
-      setSavedWallpapers(prev => prev.filter(item => item.id !== img.id));
-    } else {
-      setSavedWallpapers(prev => [img, ...prev]);
-    }
-  };
-
-  const copyToClipboard = (e, url, id) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(url);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const downloadImage = async (url, id) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      // Updated filename
-      link.download = `Asthexwall-${id}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      window.open(url, '_blank');
-    }
-  };
-
-  const fetchWallpapers = useCallback(async (isNewSearch = false) => {
-    if (activeCategory === "Saved") {
-      setWallpapers(savedWallpapers);
-      return;
-    }
-    if (loading) return;
+  const fetchWalls = async (q) => {
+    setView('home');
     setLoading(true);
+    const orientation = getOrientation();
     try {
-      const query = searchQuery || CATEGORIES.find(c => c.name === activeCategory).query;
-      const targetPage = isNewSearch ? 1 : page;
-      const response = await fetch(`/api/pexels?query=${encodeURIComponent(query)}&page=${targetPage}&orientation=${orientation}`);
-      const data = await response.json();
-      if (data.photos) {
-        const formatted = data.photos.map(p => ({
-          id: p.id, url: p.src.large2x, hd: p.src.original, photographer: p.photographer
-        }));
-        setWallpapers(prev => isNewSearch ? formatted : [...prev, ...formatted]);
-        setPage(targetPage + 1);
-      }
-    } catch (e) { console.error(e); } finally { setLoading(false); }
-  }, [activeCategory, searchQuery, page, loading, orientation, savedWallpapers]);
+      const res = await fetch(`/api/get-wallpapers?query=${q}&orientation=${orientation}`);
+      const data = await res.json();
+      setWallpapers(data.photos || []);
+    } catch (e) { console.log(e) } finally { setLoading(false) }
+  };
 
-  useEffect(() => { fetchWallpapers(true); }, [activeCategory, orientation]);
-
-  return (
-    <div className="min-h-screen bg-[#020203] text-zinc-300 font-sans selection:bg-cyan-500/30 overflow-x-hidden">
-      <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row relative z-10">
-        
-        {/* Sidebar */}
-        <aside ref={sidebarRef} className="gsap-reveal w-full lg:w-85 p-8 lg:h-screen lg:sticky lg:top-0 border-r border-white/5 bg-black/40 backdrop-blur-3xl">
-          <div className="flex items-center gap-4 mb-12">
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
-               <Zap className="text-black fill-black" size={24} />
-            </div>
-            {/* Updated Name */}
-            <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase">Asthexwall</h1>
-          </div>
-          
-          <div className="space-y-8">
-            <div className="relative group">
-              <div className="relative flex items-center bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-1">
-                <Search className="text-zinc-600 group-focus-within:text-cyan-400 transition-colors" size={18} />
-                <input 
-                  className="w-full bg-transparent border-none py-4 px-3 text-sm text-white outline-none placeholder:text-zinc-700" 
-                  placeholder="Search assets..." 
-                  onKeyDown={(e) => e.key === 'Enter' && fetchWallpapers(true)}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <nav className="space-y-2">
-              {CATEGORIES.map((c) => (
-                <button key={c.name} onClick={() => { setActiveCategory(c.name); setView('gallery'); }} 
-                  className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all ${activeCategory === c.name && view === 'gallery' ? 'bg-white text-black font-bold' : 'hover:bg-white/5 opacity-60'}`}>
-                  <span className="flex items-center gap-4 text-[10px] tracking-widest uppercase">{c.icon} {c.name}</span>
-                  {c.name === "Saved" && savedWallpapers.length > 0 && <span className="text-[10px] bg-cyan-500 text-black px-2 py-0.5 rounded-full">{savedWallpapers.length}</span>}
-                </button>
-              ))}
-            </nav>
-
-            <div className="pt-8 border-t border-white/5 grid grid-cols-2 gap-4">
-              <button onClick={() => setView('about')} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest"><Info size={18}/> About</button>
-              <button onClick={() => setView('privacy')} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest"><ShieldCheck size={18}/> Legal</button>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-8 lg:p-16">
-          {view === 'gallery' ? (
-            <>
-              <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-20">
-                <div ref={mainTitleRef} className="gsap-reveal">
-                  <h2 className="text-7xl lg:text-9xl font-black text-white tracking-tighter leading-[0.85] italic mb-6">
-                    {activeCategory === "Saved" ? "COLLECTION" : "PREMIUM"} <br/><span className="text-zinc-800 outline-text">VISUALS.</span>
-                  </h2>
-                </div>
-                
-                <div className="flex bg-zinc-900/50 p-1.5 rounded-[2rem] border border-white/5">
-                  <button onClick={() => setOrientation('landscape')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all ${orientation === 'landscape' ? 'bg-white text-black shadow-xl' : 'text-zinc-500'}`}>DESKTOP</button>
-                  <button onClick={() => setOrientation('portrait')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all ${orientation === 'portrait' ? 'bg-white text-black shadow-xl' : 'text-zinc-500'}`}>MOBILE</button>
-                </div>
-              </header>
-
-              <div className={`wallpaper-grid grid gap-12 ${orientation === 'landscape' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2 lg:grid-cols-3'}`}>
-                {wallpapers.map((img, i) => (
-                  <div key={`${img.id}-${i}`} className="wallpaper-card group relative">
-                    <div 
-                      className={`relative rounded-[2.5rem] overflow-hidden bg-zinc-900 border border-white/5 cursor-pointer ${orientation === 'landscape' ? 'aspect-[16/10]' : 'aspect-[9/16]'}`}
-                      onClick={() => setSelectedImage(img)}
-                    >
-                      <img src={img.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" loading="lazy" alt="wallpaper" />
-                      
-                      <div className="absolute top-6 right-6 flex flex-col gap-3 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500">
-                        <button onClick={(e) => toggleSave(e, img)} className={`p-4 rounded-full backdrop-blur-3xl border border-white/10 ${savedWallpapers.find(s => s.id === img.id) ? 'bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20' : 'bg-black/40 text-white hover:bg-white hover:text-black'}`}>
-                          <Heart size={18} fill={savedWallpapers.find(s => s.id === img.id) ? "currentColor" : "none"} />
-                        </button>
-                        <button onClick={(e) => copyToClipboard(e, img.hd, img.id)} className="p-4 rounded-full bg-black/40 backdrop-blur-3xl text-white border border-white/10 hover:bg-white hover:text-black transition-all relative">
-                          {copiedId === img.id ? <Check size={18} className="text-green-400" /> : <Share2 size={18} />}
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); downloadImage(img.hd, img.id); }} className="p-4 rounded-full bg-black/40 backdrop-blur-3xl text-white border border-white/10 hover:bg-white hover:text-black transition-all">
-                          <Download size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {activeCategory !== "Saved" && (
-                <div className="mt-32 flex justify-center pb-20">
-                  <button onClick={() => fetchWallpapers(false)} className="px-20 py-6 border border-white/10 rounded-full text-[10px] font-black tracking-[0.5em] hover:bg-white hover:text-black transition-all uppercase">
-                    {loading ? <Loader2 className="animate-spin" /> : "Discover More"}
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-             <div className="max-w-3xl py-12">
-                <h2 className="text-4xl font-black text-white mb-10 italic uppercase border-b border-white/10 pb-6">{view}</h2>
-                <div className="text-zinc-500 text-sm leading-relaxed space-y-8">
-                  <p>Asthexwall Pro delivers uncompromised visual assets. All images are subject to the Pexels Open License.</p>
-                  <p>We respect your privacy. No personal data is harvested during your session.</p>
-                </div>
-                <button onClick={() => setView('gallery')} className="mt-16 text-white border-b-2 border-white pb-2 font-black text-[10px] tracking-widest uppercase">Back to Visuals</button>
-             </div>
-          )}
-        </main>
-      </div>
-
-      <AnimatePresence>
-        {selectedImage && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/98 backdrop-blur-3xl flex items-center justify-center p-8" onClick={() => setSelectedImage(null)}>
-             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="relative max-w-6xl w-full text-center" onClick={e => e.stopPropagation()}>
-                <img src={selectedImage.hd} className="w-full max-h-[70vh] object-contain rounded-[2rem] mb-10 shadow-2xl" alt="selected" />
-                <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                  <div className="text-left">
-                    <h4 className="text-white text-4xl font-black italic tracking-tighter uppercase">Source Origin</h4>
-                    <p className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase mt-2">Asset ID: {selectedImage.id} • Photographer: {selectedImage.photographer}</p>
-                  </div>
-                  <div className="flex gap-4 w-full md:w-auto">
-                    <button onClick={() => downloadImage(selectedImage.hd, selectedImage.id)} className="flex-1 md:px-12 py-5 bg-white text-black font-black text-[10px] tracking-widest uppercase rounded-2xl hover:bg-cyan-500 transition-all">Download Master</button>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedImage(null)} className="absolute -top-12 right-0 text-white opacity-20 hover:opacity-100"><X size={32}/></button>
-             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+  const renderLegal = (title, content) => (
+    <div className="pt-40 px-6 max-w-4xl mx-auto min-h-[70vh]">
+      <h1 className="text-3xl font-bold mb-6 text-cyan-400 uppercase tracking-widest border-b border-cyan-500 pb-2">{title}</h1>
+      <div className="text-gray-400 leading-relaxed text-sm md:text-base space-y-4">{content}</div>
+      <button onClick={() => setView('home')} className="mt-10 border border-cyan-500 text-cyan-500 px-8 py-2 rounded-full hover:bg-cyan-500 hover:text-black transition-all">Back to Home</button>
     </div>
   );
-};
 
-export default App;
-        
+  return (
+    <div className="min-h-screen text-white bg-[#030305]">
+      {/* 3D Intro */}
+      <div id="intro" className="fixed inset-0 z-50 bg-black flex items-center justify-center pointer-events-none">
+        <canvas ref={canvasRef} className="absolute inset-0" />
+        <h1 id="logo" className="relative z-10 text-4xl md:text-7xl font-black tracking-[0.4em] opacity-0 text-glow uppercase">ASTHEXWALL</h1>
+      </div>
+
+      {/* Navbar */}
+      <nav className="fixed top-0 w-full z-40 bg-black/80 backdrop-blur-2xl border-b border-white/5 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => fetchWalls('4K Trends')}>
+          <Aperture className="text-cyan-400"/><span className="font-bold tracking-widest text-xl">ASTHEXWALL</span>
+        </div>
+        <div className="flex gap-3 overflow-x-auto w-full md:w-auto no-scrollbar px-2">
+          {['Nature', 'Space', 'Minimal', 'Anime', 'Car'].map(cat => (
+            <button key={cat} onClick={() => {setCategory(cat); fetchWalls(cat)}} className={`text-[10px] font-bold px-4 py-1.5 rounded-full border transition-all ${category === cat ? 'bg-cyan-500 border-cyan-500 text-black' : 'border-white/10 text-gray-400'}`}>{cat}</button>
+          ))}
+        </div>
+        <form onSubmit={(e)=>{e.preventDefault(); fetchWalls(searchTerm)}} className="relative w-full md:w-64">
+          <input type="text" placeholder="Search Wallpapers..." className="w-full bg-white/5 border border-white/10 rounded-full py-1.5 px-10 focus:border-cyan-400 outline-none text-sm" onChange={(e)=>setSearchTerm(e.target.value)} />
+          <Search className="absolute left-3 top-2 w-4 h-4 text-gray-400" />
+        </form>
+      </nav>
+
+      {view === 'home' ? (
+        <main className="pt-44 md:pt-36 px-4 max-w-7xl mx-auto pb-20">
+          {/* AdSense Optimized Header Text */}
+          <section className="mb-12 text-center max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-4xl font-black mb-4 uppercase tracking-tighter text-glow">Premium {category} Wallpapers</h2>
+            <p className="text-gray-400 text-sm md:text-base leading-relaxed">
+                Welcome to Asthexwall, your primary source for high-definition 4K {category} backgrounds. 
+                Each visual is hand-picked to ensure it meets our aesthetic standards for OLED, Desktop, and Mobile screens. 
+                Enhance your digital experience with our curated collection of free-to-download assets.
+            </p>
+          </section>
+
+          {loading ? <div className="h-64 flex flex-col items-center justify-center gap-4 text-cyan-400"><Loader2 className="animate-spin" /><p className="text-xs tracking-widest">FETCHING ASSETS...</p></div> : 
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
+              {wallpapers.map(p => (
+                <div key={p.id} className="relative group rounded-2xl overflow-hidden bg-zinc-900 border border-white/5 break-inside-avoid">
+                  <img src={p.src.large} alt={`${category} wallpaper by ${p.photographer}`} className="w-full transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent opacity-0 group-hover:opacity-100 transition-all p-6 flex flex-col justify-end">
+                    <p className="text-[10px] text-gray-300 italic mb-2 line-clamp-2">"A premium {category.toLowerCase()} visual captured by {p.photographer}. Highly optimized for 4K resolutions and vibrant displays."</p>
+                    <div className="flex items-center gap-2 mb-3 text-cyan-400 text-[9px] font-bold uppercase"><Maximize size={10}/> {p.width} x {p.height} | Ultra HD</div>
+                    <div className="flex justify-between items-center border-t border-white/5 pt-3">
+                      <p className="text-xs font-bold truncate w-32">{p.photographer}</p>
+                      <a href={p.src.original} target="_blank" rel="noreferrer" className="bg-white text-black p-2 rounded-full hover:bg-cyan-400 transition-all shadow-lg"><Download size={18}/></a>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          }
+
+          {/* AdSense Optimized "Why Us" Section */}
+          <section className="mt-20 grid md:grid-cols-3 gap-8 border-t border-white/5 pt-16">
+            <div className="text-center p-6 bg-white/5 rounded-3xl">
+                <Shield className="mx-auto text-cyan-400 mb-4" />
+                <h4 className="font-bold mb-2">Copyright Free</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">All our 4K wallpapers are sourced via Pexels License, making them safe for personal and creative use.</p>
+            </div>
+            <div className="text-center p-6 bg-white/5 rounded-3xl">
+                <Newspaper className="mx-auto text-cyan-400 mb-4" />
+                <h4 className="font-bold mb-2">Daily Updates</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">We refresh our trending gallery daily to provide the latest aesthetic trends in the visual world.</p>
+            </div>
+            <div className="text-center p-6 bg-white/5 rounded-3xl">
+                <ImageIcon className="mx-auto text-cyan-400 mb-4" />
+                <h4 className="font-bold mb-2">OLED Optimized</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">Our dark and minimalist categories are specially curated to save battery and look stunning on OLED panels.</p>
+            </div>
+          </section>
+        </main>
+      ) : (
+        view === 'about' ? renderLegal("About Asthexwall", (
+            <>
+                <p>Asthexwall is a high-end wallpaper discovery platform designed for creators, enthusiasts, and anyone looking to beautify their digital workspace.</p>
+                <p>We leverage the Pexels API to provide access to millions of high-quality images. Our interface is built using React and Three.js to provide a cinematic browsing experience that standard gallery sites lack.</p>
+            </>
+        )) :
+        view === 'privacy' ? renderLegal("Privacy Policy", (
+            <>
+                <p>Your privacy is paramount. Asthexwall does not require any user registration or personal data collection.</p>
+                <p><strong>Cookies:</strong> We may use third-party services like Google AdSense which use cookies to serve ads based on your visit to this and other sites on the internet.</p>
+                <p><strong>External Links:</strong> We link to Pexels for image downloads; please refer to their privacy policy when visiting their platform.</p>
+            </>
+        )) :
+        view === 'terms' ? renderLegal("Terms of Service", (
+            <>
+                <p>By using Asthexwall, you agree to the following terms:</p>
+                <ul className="list-disc pl-5 space-y-2">
+                    <li>The wallpapers are for personal use as backgrounds on digital devices.</li>
+                    <li>Redistribution or commercial sale of these images is strictly prohibited under the Pexels License.</li>
+                    <li>Asthexwall is not responsible for any copyright claims made by the original photographers.</li>
+                </ul>
+            </>
+        )) :
+        renderLegal("Disclaimer", (
+            <>
+                <p>Asthexwall is an independent gallery app. We do not claim ownership of the visual assets provided. All credits belong to the original talented photographers on the Pexels platform.</p>
+                <p>If you are a copyright owner and wish to have an image removed, please contact the Pexels team or reach out to our support.</p>
+            </>
+        ))
+      )}
+
+      {/* Footer */}
+      <footer className="bg-black/90 border-t border-white/5 py-12 px-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
+          <div className="md:col-span-2">
+            <h3 className="font-black tracking-widest mb-4 text-cyan-400 uppercase">ASTHEXWALL</h3>
+            <p className="text-xs text-gray-500 leading-relaxed max-w-sm">
+                The world's most cinematic wallpaper portal. Discover thousands of ultra HD visuals for your phone and desktop. Powered by React and fueled by your aesthetic needs.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+            <p className="text-white mb-2">Company</p>
+            <button onClick={() => setView('about')} className="text-left hover:text-cyan-400 transition-colors">About Us</button>
+            <button onClick={() => setView('privacy')} className="text-left hover:text-cyan-400 transition-colors">Privacy Policy</button>
+          </div>
+          <div className="flex flex-col gap-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+            <p className="text-white mb-2">Legal</p>
+            <button onClick={() => setView('terms')} className="text-left hover:text-cyan-400 transition-colors">Terms of Service</button>
+            <button onClick={() => setView('disclaimer')} className="text-left hover:text-cyan-400 transition-colors">Disclaimer</button>
+          </div>
+        </div>
+        <div className="text-center mt-12 pt-8 border-t border-white/5 text-[9px] text-gray-600 uppercase tracking-widest">
+            © 2024 Asthexwall. High Resolution Gallery Platform.
+        </div>
+      </footer>
+    </div>
+  )
+                      }
