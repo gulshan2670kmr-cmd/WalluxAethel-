@@ -1,75 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <meta name="google-site-verification" content="B4WwjSTxC4VR4yq55ef6HA6GhMOgMdsh84pt69lLCVA" />
 
-    <title>Asthexwall | Premium 4K Curation</title>
+    <title>Asthexwall | Premium Aesthetic Wallpapers & 4K Visuals</title>
+    <meta name="description" content="Asthexwall offers high-fidelity 4K wallpapers for mobile and desktop. Curated collection of cinematic, landscape, and abstract visual assets for creators.">
+    
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: { sans: ['Inter', 'sans-serif'] },
-            colors: {
-              cyan: { 400: '#22d3ee', 500: '#06b6d4' }
-            }
-          }
+
+    <style>
+        html { scroll-behavior: smooth; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #020203; 
+            margin: 0; 
+            color: #d4d4d8; 
+            overflow-x: hidden; /* Mobile horizontal scroll issue fix */
         }
-      }
-    </script>
-
-    <style type="text/css">
-      body {
-        background-color: #020202;
-        margin: 0;
-        color: white;
-        font-family: 'Inter', sans-serif;
-        overflow-x: hidden; /* Site horizontal scroll na kare */
-      }
-      
-      .text-glow {
-        text-shadow: 0 0 35px rgba(34, 211, 238, 0.5);
-      }
-
-      .glass-nav {
-        background: rgba(255, 255, 255, 0.02);
-        backdrop-filter: blur(40px);
-        -webkit-backdrop-filter: blur(40px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-      }
-
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-
-      @keyframes pulse-glow {
-        0%, 100% { opacity: 0.4; }
-        50% { opacity: 0.8; }
-      }
-      .animate-pulse-custom {
-        animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-      }
-
-      /* Logo Spin Animation */
-      @keyframes spin-slow {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-      .animate-spin-slow {
-        animation: spin-slow 10s linear infinite;
-      }
+        .outline-text { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1); color: transparent; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-  </body>
+</body>
 </html>
