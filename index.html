@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <meta name="google-site-verification" content="B4WwjSTxC4VR4yq55ef6HA6GhMOgMdsh84pt69lLCVA" />
+
     <title>Asthexwall | Premium 4K Curation</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,18 +16,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
-      // Yahan hum Tailwind ko configure kar rahe hain bina kisi file ke
       tailwind.config = {
         theme: {
           extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-            },
+            fontFamily: { sans: ['Inter', 'sans-serif'] },
             colors: {
-              cyan: {
-                400: '#22d3ee',
-                500: '#06b6d4',
-              }
+              cyan: { 400: '#22d3ee', 500: '#06b6d4' }
             }
           }
         }
@@ -32,12 +29,12 @@
     </script>
 
     <style type="text/css">
-      /* Premium Custom Styles */
       body {
         background-color: #020202;
         margin: 0;
         color: white;
         font-family: 'Inter', sans-serif;
+        overflow-x: hidden; /* Site horizontal scroll na kare */
       }
       
       .text-glow {
@@ -51,17 +48,23 @@
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
 
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
 
-      /* Loader Animation */
       @keyframes pulse-glow {
         0%, 100% { opacity: 0.4; }
         50% { opacity: 0.8; }
       }
       .animate-pulse-custom {
         animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      /* Logo Spin Animation */
+      @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .animate-spin-slow {
+        animation: spin-slow 10s linear infinite;
       }
     </style>
   </head>
