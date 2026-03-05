@@ -2,12 +2,68 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="google-site-verification" content="B4WwjSTxC4VR4yq55ef6HA6GhMOgMdsh84pt69lLCVA" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Asthexwall | Premium 4K Aesthetic Wallpapers</title>
-    <meta name="description" content="Download ultra-high-definition 4K wallpapers. Nature, Space, and Minimalist backgrounds for Mobile & Desktop.">
+    <title>Asthexwall | Premium 4K Curation</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>body { background-color: #030305; margin: 0; font-family: 'Inter', sans-serif; overflow-x: hidden; }</style>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+      // Yahan hum Tailwind ko configure kar rahe hain bina kisi file ke
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              cyan: {
+                400: '#22d3ee',
+                500: '#06b6d4',
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+    <style type="text/css">
+      /* Premium Custom Styles */
+      body {
+        background-color: #020202;
+        margin: 0;
+        color: white;
+        font-family: 'Inter', sans-serif;
+      }
+      
+      .text-glow {
+        text-shadow: 0 0 35px rgba(34, 211, 238, 0.5);
+      }
+
+      .glass-nav {
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(40px);
+        -webkit-backdrop-filter: blur(40px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Loader Animation */
+      @keyframes pulse-glow {
+        0%, 100% { opacity: 0.4; }
+        50% { opacity: 0.8; }
+      }
+      .animate-pulse-custom {
+        animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
